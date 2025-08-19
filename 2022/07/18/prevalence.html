@@ -1,0 +1,711 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Slicing Infinity</title>
+    <link rel="stylesheet" href="/assets/css/styles.css?v=3">
+
+    <!-- Add MathJax Latex Support -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Add Custom Javascript -->
+    
+      <script type="text/javascript" src="/assets/js/post.js"></script>
+    
+
+    <link type="application/atom+xml" rel="alternate" href="https://www.jgaeb.com/feed.xml" title="Jgaeb" />
+
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Slicing Infinity | Jgaeb</title>
+<meta name="generator" content="Jekyll v4.3.2" />
+<meta property="og:title" content="Slicing Infinity" />
+<meta name="author" content="Johann D. Gaebler" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Can algorithmic fairness ever be harmful, even to the people it’s intended to protect? For some time, researchers have known that adhering to common algorithmic fairness criteria like equalized false positive rates can, counterintuitively, lead to worse outcomes for marginalized groups.1 The crux of the issue, however, is not if such fairness criteria can be harmful, but how often. In our new paper on causal fairness, “Causal Conceptions of Fairness and their Consequences,” Hamed Nilforoshan, Ravi Shroff, Sharad Goel, and I tried to make rigorous the intuition that, for a growing number of fairness definitions incorporating causal reasoning, the answer is “almost always.” See, e.g., “[Algorithmic Decision Making and the Cost of &#8617;" />
+<meta property="og:description" content="Can algorithmic fairness ever be harmful, even to the people it’s intended to protect? For some time, researchers have known that adhering to common algorithmic fairness criteria like equalized false positive rates can, counterintuitively, lead to worse outcomes for marginalized groups.1 The crux of the issue, however, is not if such fairness criteria can be harmful, but how often. In our new paper on causal fairness, “Causal Conceptions of Fairness and their Consequences,” Hamed Nilforoshan, Ravi Shroff, Sharad Goel, and I tried to make rigorous the intuition that, for a growing number of fairness definitions incorporating causal reasoning, the answer is “almost always.” See, e.g., “[Algorithmic Decision Making and the Cost of &#8617;" />
+<link rel="canonical" href="https://www.jgaeb.com/2022/07/18/prevalence.html" />
+<meta property="og:url" content="https://www.jgaeb.com/2022/07/18/prevalence.html" />
+<meta property="og:site_name" content="Jgaeb" />
+<meta property="og:image" content="https://www.jgaeb.com/assets/images/prevalence-cover.jpg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-07-18T00:00:00+00:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://www.jgaeb.com/assets/images/prevalence-cover.jpg" />
+<meta property="twitter:title" content="Slicing Infinity" />
+<meta name="twitter:site" content="@jgaeb1" />
+<meta name="twitter:creator" content="@Johann D. Gaebler" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Johann D. Gaebler"},"dateModified":"2022-07-18T00:00:00+00:00","datePublished":"2022-07-18T00:00:00+00:00","description":"Can algorithmic fairness ever be harmful, even to the people it’s intended to protect? For some time, researchers have known that adhering to common algorithmic fairness criteria like equalized false positive rates can, counterintuitively, lead to worse outcomes for marginalized groups.1 The crux of the issue, however, is not if such fairness criteria can be harmful, but how often. In our new paper on causal fairness, “Causal Conceptions of Fairness and their Consequences,” Hamed Nilforoshan, Ravi Shroff, Sharad Goel, and I tried to make rigorous the intuition that, for a growing number of fairness definitions incorporating causal reasoning, the answer is “almost always.” See, e.g., “[Algorithmic Decision Making and the Cost of &#8617;","headline":"Slicing Infinity","image":"https://www.jgaeb.com/assets/images/prevalence-cover.jpg","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.jgaeb.com/2022/07/18/prevalence.html"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://www.jgaeb.com/assets/img/headshot.png"},"name":"Johann D. Gaebler"},"url":"https://www.jgaeb.com/2022/07/18/prevalence.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+  </head>
+  <body>
+    <header>
+      <h1>Johann D. Gaebler</h1>
+      <p class="contact-info"><a href="mailto:me@jgaeb.com">Email</a> • <a href="https://github.com/jgaeb">GitHub</a> • <a href="https://twitter.com/jgaeb1">Twitter</a></contact>
+    </header>
+    <nav>
+      <div class="wrapper-nav-items">
+
+  <div class="nav-item-container">
+    <a href="/" >
+      Home
+    </a>
+  </div>
+
+  <div class="nav-item-container">
+    <a href="/about.html" >
+      About
+    </a>
+  </div>
+
+  <div class="nav-item-container">
+    <a href="/research.html" >
+      Research
+    </a>
+  </div>
+
+  <div class="nav-item-container">
+    <a href="/blog.html" >
+      Blog
+    </a>
+  </div>
+
+</div>
+
+    </nav>
+    <main>
+      <article class="blog">
+  <div class="title">
+    <h1>Slicing Infinity</h1>
+    
+      <h2>A very brief introduction to prevalence and the mathematics of causal fairness
+</h2>
+    
+  </div>
+  <p class="date">July 18th, 2022</p>
+  <p class="rep-materials">
+    
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+        <a href="https://github.com/jgaeb/jgaeb.github.io/tree/main/assets/posts/prevalence">Post replication materials</a>
+        
+  </p>
+
+  
+    <figure class="cover">
+      
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+      
+      <img src="/assets/images/prevalence-cover.jpg" alt="Cross section of a Citrus sinensis.">
+      
+        <figcaption>
+          Image:
+          <a href="https://handle.nal.usda.gov/10113/POM00006321">James Marion Shull,<br>via U.S. Department of Agriculture Pomological Watercolor Collection.
+</a>
+        </figcaption>
+      
+    </figure>
+
+
+  <p>Can algorithmic fairness ever be harmful, even to the people it’s intended to
+protect? For some time, researchers have known that adhering to common
+algorithmic fairness criteria like equalized false positive rates <em>can</em>,
+counterintuitively, lead to worse outcomes for marginalized groups.<sup id="fnref:1" role="doc-noteref"><a href="#fn:1" class="footnote" rel="footnote">1</a></sup> The
+crux of the issue, however, is not <em>if</em> such fairness criteria can be harmful,
+but <em>how often</em>. In our new paper on causal fairness, “<a href="/papers/causal_fairness.html">Causal Conceptions of
+Fairness and their Consequences</a>,” <a href="http://hamedn.com">Hamed
+Nilforoshan</a>, <a href="https://steinhardt.nyu.edu/people/ravi-shroff">Ravi
+Shroff</a>, <a href="https://5harad.com">Sharad
+Goel</a>, and I tried to make rigorous the intuition that, for
+a growing number of fairness definitions incorporating causal reasoning, the
+answer is “almost always.”</p>
+
+<p>Formalizing and proving a result that captures this intuition involved
+mathematics that we, at the very least, found to be surprisingly deep and
+challenging. The technicality of our main result was something that developed
+organically over time and from comparatively straightforward intuitions. In
+particlular, the mathematical concept of prevalence, which uses low-dimensional
+cross sections to extend—in a limited way—the idea of Lebesgue measure to
+infinite dimensional spaces, played an especially important role in this
+process.<sup id="fnref:2" role="doc-noteref"><a href="#fn:2" class="footnote" rel="footnote">2</a></sup> To help unpack and motivate our main theorem, I’ve tried to lay
+out below the basics of prevalence and other key ideas that ultimately grew
+into the rigorous end result.</p>
+
+<h2 id="threshold-policies-and-inframarginality">Threshold policies and inframarginality</h2>
+
+<p>Consider the problem faced by a lender with a finite budget making loans of a
+fixed size to a large group of applicants. If, for each applicant, the lender
+has an (accurate) estimate of their likelihood of repaying the loan<sup id="fnref:3" role="doc-noteref"><a href="#fn:3" class="footnote" rel="footnote">3</a></sup> and the
+lender’s only goal is to maximize profit, then the optimal solution from the
+lender’s perspective is straightforward: give loans to applicants in
+decreasing order of their probability of repaying until either the budget is
+exhausted, or the expected return on a loan for the remaining applicants is no
+longer positive.</p>
+
+<p>If the lender behaves in this way, then there will be some probability of
+repayment \(p\) such that all the applicants with probability of repayment
+greater than \(p\) received a loan, and all the applicants with probability
+of repayment less than \(p\) did not. The value \(p\) represents a
+threshold that characterizes<sup id="fnref:4" role="doc-noteref"><a href="#fn:4" class="footnote" rel="footnote">4</a></sup> the entire lending policy—which we
+consequently call a <em>threshold policy</em>.</p>
+
+<p>Threshold policies frequently appear as the optimal approach in problems
+involving some kind of utility. The reason threshold policies are optimal is
+intuitively clear: any other policy would force the lender to overlook someone
+with a higher probability of repayment to give a loan to someone with a lower
+probability of repayment.</p>
+
+<p>Of course, when there’s more than one objective and more than one actor, things
+aren’t always so simple. Imagine the more complicated scenario of an admissions
+committee trying to decide which applicants to admit to a university’s incoming
+class. The university itself doesn’t have the resources to offer a spot to
+every applicant. The committee members all agree that they want the university
+to graduate as many students as possible. In addition, they all agree that they
+want to admit students from a historically disadvantaged group. For simplicity,
+let’s also suppose they also agree that graduating as many students as possible
+and admitting as many students as possible from the target group are the only
+two objectives. What the committee members don’t agree on is how to balance
+them.</p>
+
+<p>Group decisions are hard, and in this case, it’s not necessarily easy—or even
+possible—to find a policy that is optimal (i.e., utility-maximizing) for all
+the committee members at the same time. But it is easy to find policies that
+are optimal for <em>none</em> of them. Consider the applicants in the target group,
+which we’ll call \(a_1\), along with the other applicants, who we’ll say are
+in group \(a_0\). Within each group, everyone on the committee will prefer a
+threshold policy to any other policy that admits the same number of students.
+That is, all else equal, everyone on the committee agrees that a policy that
+admits all the students in group \(a\) with a probability of graduation
+greater than some fixed threshold and none of the students with a probability
+less than it is preferable to any other way of admitting students <em>in that
+group</em>.</p>
+
+<p>When everyone on the committee prefers one policy to another, we say that the
+first policy <em>(strongly) Pareto dominates</em> the second. While no policy choice
+is guaranteed to please everyone, strongly Pareto dominated policies are bad
+choices for the committee, because they represent a missed opportunity to make
+everyone happier.</p>
+
+<p>Following the line of reasoning above, we can say for sure that whatever
+admissions policy the committee lands on, it’ll involve two (possibly equal)
+thresholds, one for each group. Otherwise, the committee would have adopted a
+strongly Pareto dominated admissions policy, meaning that there is an
+alternative policy the entire committee would prefer to the one they actually
+picked—concretely, a policy that would result in more students graduating
+overall, as well as more students being admitted from the target group. We
+refer to such policies as <em>multiple threshold policies</em>. Likewise, everyone on
+the committee will want to admit as many students as they can. So, in fact, we
+can be sure that the policy will be a <em>budget exhausting</em> multiple threshold
+policy.</p>
+
+<p>After a difficult negotiating process, imagine that the committee settles on an
+admissions policy. If they wished to ensure their policy were fair, the
+committee might consult a fairness criterion, like counterfactual equalized
+odds. Counterfactual equalized odds requires that
+\begin{equation}
+  D\ \rlap{\perp}\mkern2mu\perp A \mid Y(1),
+\end{equation}
+where \(D\) represents the committee’s decision, \(A\) represents group
+membership, and \(Y(1)\) represents whether or not an applicant <em>would</em>
+graduate <em>if</em> admitted. In other words, it requires that the committee admit
+individuals at the same rate across groups, both among those applicants who
+counterfactually <em>would</em> graduate, if admitted, and among those individuals who
+counterfactually would <em>not</em> graduate, if admitted.</p>
+
+<p>It’s possible that the committee might find a multiple threshold policy that
+satisfies this criterion. The figure below shows a possible <em>ex ante</em>
+distribution of probability of graduating, conditional both on group membership
+and on whether or not the individual in question would actually graduate if
+admitted. If the committee chose a threshold of \(\tfrac 1 2\) for both
+groups—and if that resulted in a policy that exhausted the budget—then the
+resulting admissions policy would be both Pareto efficient <em>and</em> satisfy
+counterfactual equalized odds.</p>
+
+<figure>
+<p><img src="/assets/posts/prevalence/balanced.svg" alt="Distribution of ex ante probability of graduation" /></p>
+  <figcaption>Distribution of <em>ex ante</em> probability of graduation, faceted by group and by whether the applicant <em>would</em> graduate <em>if</em> admitted. The policy the committee has chosen is both Pareto efficient and satisfies counterfactual equalized odds.</figcaption>
+</figure>
+
+<p>However, the fact that the committee’s policy satisfies counterfactual
+equalized odds seems quite delicate. If the committee retained the same
+admissions policy, but the distributions were only slightly different,
+counterfactual equalized odds would no longer hold.</p>
+
+<figure>
+<p><img src="/assets/posts/prevalence/unbalanced.svg" alt="Distribution of ex ante probability of graduation" /></p>
+  <figcaption>Distribution of <em>ex ante</em> probability of graduation, faceted by group and by whether the applicant <em>would</em> graduate <em>if</em> admitted. The policy the committee has chosen is Pareto efficient, but no longer satisfies counterfactual equalized odds.</figcaption>
+</figure>
+
+<p>And, in fact, counterfactual equalized odds can never hold in this case for
+<em>any</em> budget-exhausting multiple threshold policy the committee might choose.
+To ensure that the policy is budget-exhausting, if we increase one threshold,
+we have to decrease the other, and so any thresholds that equalize the
+admissions rates across groups for people who would graduate if admitted <em>have</em>
+to make the admissions rates different for those who would not graduate if
+admitted.</p>
+
+<p>From this, we can conclude that <em>any</em> policy satisfying counterfactual
+equalized odds will not satisfy the committee. The policy could be improved to
+a different policy everyone on the committee preferred—that is, one that
+graduates a larger number of students overall <em>and</em> admits more students from
+the target group—by instead ignoring the fairness criterion.</p>
+
+<p>This state of affairs is closely related to the statistical notion of
+inframarginality. Statistical metrics that assess an outcome across the entire
+distribution of risk or utility, rather than at the margin, are said to be
+“inframarginal.” Common error metrics like false positive rates—or, in our
+example, admissions rates—depend on both the underlying utility or risk
+distribution <em>and</em> how the decision maker makes marginal decisions—that is,
+where they place the threshold for classifying an observation as “positive,” in
+the case of false positive rates, or for admitting a student, in the case of
+our admissions example. The difficulty of disentangling the role of the
+decision maker from the role of the underlying distribution can lead to issues
+when inframarginal statistics are used to assess decisions: discrepancies in
+inframarginal statistics can reflect either differences in the decision maker’s
+choices <em>or</em> differences in the underlying distributions.</p>
+
+<p>In the example at hand, the inframarginal nature of the metrics used means that
+the fairness criterion can only be satisfied by a Pareto efficient policy in
+the case where the underlying distribution is “favorable” to such an occurrence.
+And the example would seem to indicate that being “favorable” is a fairly
+unusual property: we only had to perturb the distributions a little bit for
+counterfactual equalized odds to require the committee to make sacrifices to
+<em>both</em> of its objectives. This suggests that for a “typical” distribution, the
+committee will find itself in a similar situation.</p>
+
+<p>But what does it mean for a property of distributions to be “typical”? To
+answer that question, we have to take a detour through prevalence and
+infinite-dimensional measure theory.</p>
+
+<h2 id="prevalence-and-fubinis-theorem">Prevalence and Fubini’s Theorem</h2>
+
+<p>To understand prevalence, it’s useful to imagine trying to calculate the volume
+of a three-dimensional orange using only the areas of two-dimensional cross
+sections of the orange. Fubini’s theorem tells us that the volume of the
+original orange can be found by integrating the area of each slice.</p>
+
+<p>Put slightly differently, Fubini’s theorem tells us that the (Lebesgue) measure
+of high-dimensional objects is encoded in the measure of their lower
+dimensional cross sections. If the cross-sections are very large, the original
+object will be large accordingly; if the cross sections are small, then the
+original object will be small in the same proportion.</p>
+
+<p>Unfortunately, Lebesgue measure itself only makes sense on finite dimensional
+spaces. To get an intuitive sense as to why, consider the unit cube
+\(\mathbb{I}^n = [0,1]^n \subseteq \mathbb{R}^n\). In all dimensions, it
+has measure one, i.e., \(\lambda_n[\mathbb{I}^n] = 1\). In
+\(\mathbb{R}^n\), we can subdivide the unit cube into \(2^n\) sub-cubes,
+each with dimensions exactly half that of the unit cube. As a result, each of
+these cubes must have measure \(\tfrac 1 {2^n}\). The sub-cubes are all
+“really” \(n\)-dimensional objects—they have non-empty interior—and so their
+Lebesgue measure is consequently greater than zero. But as \(n\) increases,
+they grow smaller relative to the unit cube. In an infinite dimensional space,
+the sub-cubes would have to be infinitely smaller than the original cube, even
+though both are “real” objects of full dimension, and so both should have
+positive Lebesgue measure.</p>
+
+<p>The key insight of the notion of prevalence is that even though Lebesgue
+measure itself can’t be generalized to infinite dimensions, a particular notion
+of largeness and smallness that it gives rise to can be. Under Lebesgue
+measure, the “smallest” objects are the null, or measure zero, sets; the
+“largest” objects are the co-null or full sets, the sets with complements that
+are null sets. Fubini’s theorem gives us an easy way to discern if a
+finite-dimensional set is null: if all of the set’s cross sections are null,
+then so is the original set.</p>
+
+<p>The same logic, it turns out, can be extended to infinite dimensional spaces.
+We can detect that a subset of an infinite dimensional space is small—or “shy,”
+in the jargon—if all of its finite-dimensional cross sections are null. A set
+is large—or “prevalent”—if all of its cross sections are full.<sup id="fnref:5" role="doc-noteref"><a href="#fn:5" class="footnote" rel="footnote">5</a></sup></p>
+
+<p>Unfortunately, this is not quite enough for us to make sense of “almost any”
+distribution. The reason for this is that the distributions aren’t a vector
+space themselves, but rather a convex set sitting inside a larger infinite
+dimensional vector space. The space of distributions on an arbitrary set is
+analogous to the \(n-1\)-simplex \(\Delta^{n-1}\), where
+\begin{equation}
+  \Delta^{n-1} = \left\{\mathbf{x} \in \mathbb{R}^n : \sum_{i=1}^n x_i =
+  1,\ (\forall i)\ 0 \leq x_i \leq 1\right\}.
+\end{equation}</p>
+
+<p>The points of \(\Delta^{n-1}\) correspond to distributions on a finite set
+of \(n\) elements. And we can talk about generic properties of distributions
+on \(n\) elements through Lebesgue measure and \(\Delta^{n-1}\). For
+instance, “most” distributions on \(n-1\) elements assign positive
+probability to all of the elements. This is easy to see, since the boundary of
+\(\Delta^{n-1}\) is a measure zero subset of the simplex.</p>
+
+<p>However, we might run into issues detecting this fact with Fubini’s theorem if
+we weren’t sufficiently careful with how we constructed our cross sections.
+Consider \(\Delta^1\), which is the line segment joining \((0,1)\) and
+\((1,0)\) in the plane. If we took our cross sections parallel to the
+\(y\)-axis, every cross section would be a null set consisting of a single
+point. All we would learn is that \(\Delta^1\) <em>itself</em> is a null set in
+\(\mathbb{R}^2\).</p>
+
+<figure>
+<p><img src="/assets/posts/prevalence/bad-cross.svg" alt="Cross sections parallel to the y-axis." /></p>
+  <figcaption>Cross sections of \(\Delta^1\) parallel to the \(y\)-axis. The cross section, detailed on the right, contains only a single point, i.e., a null set.</figcaption>
+</figure>
+
+<p>If, instead, we chose our cross sections parallel to the line \(y = -x\),
+something different would happen. Most of the cross sections would be empty.
+But a single cross section would contain all of \(\Delta^1\), which would
+look like a line of length—i.e., measure—\(\sqrt{2}\). Its boundary, the two
+endpoints, would be measure zero, showing that it is small <em>relative to</em>
+\(\Delta^1\). From this, we can conclude that a typical distribution on two
+elements gives positive probability to both elements, as expected.</p>
+
+<figure>
+<p><img src="/assets/posts/prevalence/good-cross.svg" alt="Cross sections parallel to the y = -x." /></p>
+  <figcaption>Cross sections of \(\Delta^1\) parallel to the \(y = -x\). The cross section, detailed on the right, contains all of \(\Delta^1\), of which the boundary forms a null set.</figcaption>
+</figure>
+
+<p>It is this insight that leads to the notion of <em>relative prevalence</em>. Given a
+convex set \(C\)—for example, the set of distributions on an infinite set—we
+can see that a subset \(E\) is small—i.e., shy—<em>relative</em> to \(C\) if we
+can find a collection of cross sections such that \(C\) is large (i.e., has
+non-zero measure) in <em>some</em> of them, but \(E\) is small (i.e., has zero
+measure) in <em>all</em> of them.</p>
+
+<p>It is in this sense of relative prevalence that we say that for almost every
+distribution,<sup id="fnref:6" role="doc-noteref"><a href="#fn:6" class="footnote" rel="footnote">6</a></sup> any policy satisfying various fairness conditions is strongly
+Pareto dominated.</p>
+
+<h2 id="sketch-of-the-main-proof">Sketch of the main proof</h2>
+
+<p>Armed with the notion of relative prevalence, the basic idea of the main proof
+is relatively straightforward: we need to find a way of cutting cross sections
+of the space of distributions such that the space of distributions itself
+appears large, but the set of distributions over which there are Pareto
+efficient policies satisfying the various counterfactual fairness definitions
+appears small.</p>
+
+<p>In the case of the 1-simplex, the key was to take the cross sections parallel
+to the vector \((1, -1)\). This vector has the property that if we start with
+a (typical) distribution \((p, 1 - p)\) and perturb it a small amount in the
+direction \((1, -1)\)—i.e., move to \((p + \epsilon, 1 - p -
+\epsilon)\)—we stay <em>inside</em> the simplex. All we’ve done is to move a small
+amount of probability mass from one element to the other.</p>
+
+<p>In the general case, we’ll take a similar approach, looking for ways to move
+mass around the underlying distribution while ensuring that the total mass is
+constant. If we do this carefully, we’ll be able to stay <em>inside</em> the space of
+distributions—meaning the space of distributions will appear large in the cross
+section—but the distributions in the cross section that allow for a Pareto
+efficient policy will be sparse.</p>
+
+<p>The basic argument then proceeds as follows: take a cross section and assume,
+for the sake of argument, that there is <em>some</em> distribution in it that admits a
+Pareto efficient policy satisfying one of the fairness definitions—say,
+counterfactual equalized odds. For each group, look at how the <em>ex ante</em>
+probability of graduation is distributed among applicants who would not
+graduate if admitted. Suppose there are \(n\) groups. The fact that the
+admissions rates have to be equal for all of the groups among applicants who
+would not graduate if admitted gives \(n - 1\) constraints. We get an
+additional constraint from the fact that a Pareto efficient policy should
+satisfy the budget, giving a total of \(n\) constraints. The committee has
+(at most) \(n\) degrees of freedom in designing its admissions policy,<sup id="fnref:7" role="doc-noteref"><a href="#fn:7" class="footnote" rel="footnote">7</a></sup><sup id="fnref:8" role="doc-noteref"><a href="#fn:8" class="footnote" rel="footnote">8</a></sup>
+one for each threshold it picks. This gives exactly zero <em>net</em> degrees of
+freedom, and so, as one might expect, a simple argument shows that the \(n\)
+degrees of freedom and the \(n\) constraints jointly pin down precisely one
+policy that is a budget-exhausting multiple threshold policy <em>and</em> that
+equalizes the admissions rates among applicants who would not graduate if
+admitted.</p>
+
+<p>However, counterfactual equalized odds imposes additional constraints. In
+particular, the admissions rates for individuals who <em>would</em> graduate if
+admitted <em>also</em> have to be equal across groups. If we choose our cross section
+carefully, we can ensure that, within the cross section, the only part of the
+distribution that changes is the <em>ex ante</em> probability of graduation for
+applicants who would graduate if admitted. That means that in the entire cross
+section, we only have to think about one set of thresholds: the particular set
+of thresholds we found in the previous paragraph. But as we move around the
+cross section, the distributions of <em>ex ante</em> probability of graduation for
+individuals who would graduate if admitted <em>will</em> change, with the proportion
+falling above the corresponding group-specific threshold changing independently
+for each group. The only distributions that can satisfy counterfactual
+equalized odds are those for which the admissions rates for applicants who
+would graduate if admitted are all equal. Within our cross section, which looks
+like a copy of \(\mathbb{R}^k\), these distributions look like a copy of the
+one-dimensional subspace \(\mathbb{R} \cdot \mathbf{1}\), where
+\(\mathbf{1}\) is the ones vector. Since a one-dimensional subspace is much
+smaller than the high-dimensional space containing it, the set of distributions
+over which there are Pareto efficient policies satisfying the various
+counterfactual fairness definitions has null measure in the cross section, as
+desired.</p>
+
+<h3 id="why-is-the-proof-so-long">Why is the proof so long?</h3>
+
+<p>Theorem 1 in our paper rigorously captures the informal content of the
+discussion above. Its actual proof, however, is much more involved than the
+sketch just presented—nearly twice as long as the main text itself. There are
+several reasons for the additional complexity.</p>
+
+<p>First and foremost, prevalence is, in some ways, a fairly demanding condition.
+The shy set—i.e., the set of distributions admitting a Pareto efficient policy
+satisfying one of the counterfactual fairness definitions—has to appear small
+in <em>every</em> cross section. This poses difficulties because, for general
+distributions on continuous covariates, many different kinds of corner cases
+can arise. Relevant quantities, such as \(\mathbb{E}[D \mid Y(1) = y]\), can
+fail to be well-defined if, for instance, \(\Pr(Y(1) = y) = 0\). Thresholds
+can fall exactly between strata when additional conditioning on a reduced set
+of covariates \(W\) is introduced. These and other similar corner cases are,
+indeed, atypical, but dealing with them introduces additional complexity into
+the proof.</p>
+
+<p>Prevalence is also demanding in the sense that it also places constraints on
+the descriptive complexity of the sets involved. The convex set \(C\) must be
+completely metrizable, and a set \(E\) that is shy relative to \(C\) must
+be contained in a shy universally measurable set. Determining the complexity of
+the sets involved in the proof is complicated somewhat by the fact that the
+space of totally bounded measures, which is the ambient vector space of which
+the space of distributions forms a part, is non-separable, and in general can
+have unwieldy topological properties.</p>
+
+<p>Lastly, the cross sections must be chosen so that the amount of mass above and
+below the thresholds changes as we move around the cross section, no matter
+where the thresholds are. While in particular cases, such as the admissions
+example presented above, it is possible to explicitly construct the cross
+sections so that this property holds, in general this is very difficult. In
+particular, the hypotheses of the theorem are extremely general, and place
+almost no restrictions on the collection of utility functions
+\(\mathcal{U}\) or the covariate space \(\mathcal{X}\). As a result,
+almost nothing can be said in advance about what distributions of utility can
+arise—and, more importantly, what restrictions there might be on the support of
+the distributions that <em>can</em> arise. Thus, a special construction known as a
+measure-theoretic union is required to find adequate cross sections.</p>
+
+<h2 id="beyond-causal-fairness">Beyond causal fairness</h2>
+
+<p>Looking forward, the idea of a “typical” distribution seems like a useful one,
+with potential applications to a wide variety of theoretical problems in
+statistics and machine learning. Researchers often seek to characterize how
+various novel methods or algorithms behave under “normal” circumstances when
+that behavior depends in part on a distribution about which very little is
+known in advance. Prevalence offers an elegant mathematical framework for
+approaching questions about the “typical” or “generic” behavior of
+distributions with, we hope, further potential to illuminate questions of this
+kind.</p>
+<div class="footnotes" role="doc-endnotes">
+  <ol>
+    <li id="fn:1" role="doc-endnote">
+      <p>See, e.g., “<a href="https://arxiv.org/abs/1701.08230">Algorithmic Decision Making and the Cost of
+Fairness</a>” and “<a href="https://arxiv.org/abs/1808.00023">The Measure and
+Mismeasure of Fairness: A Critical Review of Fair Machine
+Learning</a>” <a href="#fnref:1" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:2" role="doc-endnote">
+      <p>For additional mathematical details on prevalence, including relative
+prevalence, the variant we use, see Ott &amp; Yorke’s review paper,
+“<a href="https://www.ams.org/journals/bull/2005-42-03/S0273-0979-05-01060-8/">Prevalence</a>.” <a href="#fnref:2" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:3" role="doc-endnote">
+      <p>For simplicity, we’ll imagine that loan recipients either default and
+fail to repay the entire loan, or repay back the loan in full with
+interest. <a href="#fnref:3" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:4" role="doc-endnote">
+      <p>This is not, strictly speaking, correct. If there are applicants whose
+probability of repayment is exactly \(p\), then the lender may choose to
+make loans to them in various ways without increasing or decreasing their
+profit, as long as the number of loans remains constant. If the number of
+people having any particular probability of repayment is small relative to
+the total number of people, however, one can safely overlook this point. <a href="#fnref:4" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:5" role="doc-endnote">
+      <p>Such sets are actually said to be <em>\(k\)-shy</em> or <em>\(k\)-prevalent</em>.
+There exist sets that are shy in the strict sense but not \(k\)-shy for
+any \(k \in \mathbb{N}\), and similarly for prevalent sets. However,
+the distinction is not important here. <a href="#fnref:5" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:6" role="doc-endnote">
+      <p>Or, more accurately, almost every \(\mathcal{U}\)-fine distribution. See
+Appendix E.6 for additional information. <a href="#fnref:6" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:7" role="doc-endnote">
+      <p>While every Pareto efficient policy must be a budget-exhausting multiple
+threshold policy, the reverse is not necessarily true. <a href="#fnref:7" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:8" role="doc-endnote">
+      <p>When the distribution induces atoms on the utility scale, this can
+introduce additional—even infinite—degrees of freedom in certain
+circumstances. See the discussion of \(\mathcal{U}\)-fineness and
+Appendix E.6 in the paper. <a href="#fnref:8" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+</article>
+
+    </main>
+    <footer>
+  
+  <p>
+    &copy; 2021–2025 Johann D. Gaebler.
+    Last updated August 19, 2025.
+  </p>
+</footer>
+
+  </body>
+</html>

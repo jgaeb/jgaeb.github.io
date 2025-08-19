@@ -1,0 +1,142 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Mitigating Omitted- and Included-Variable Bias in Estimates of Disparate Impact
+</title>
+    <link rel="stylesheet" href="/assets/css/styles.css?v=3">
+
+    <!-- Add MathJax Latex Support -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Add Custom Javascript -->
+    
+
+    <link type="application/atom+xml" rel="alternate" href="https://www.jgaeb.com/feed.xml" title="Jgaeb" />
+
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Mitigating Omitted- and Included-Variable Bias in Estimates of Disparate Impact | Jgaeb</title>
+<meta name="generator" content="Jekyll v4.3.2" />
+<meta property="og:title" content="Mitigating Omitted- and Included-Variable Bias in Estimates of Disparate Impact" />
+<meta name="author" content="Jongbin Jung" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Managers, employers, policymakers, and others often seek to understand whether decisions are biased against certain groups. One popular analytic strategy is to estimate disparities after adjusting for observed covariates, typically with a regression model. This approach, however, suffers from two key statistical challenges. First, omitted-variable bias can skew results if the model does not adjust for all relevant factors; second, and conversely, included-variable bias—a lesser-known phenomenon—can skew results if the set of covariates includes irrelevant factors. Here we introduce a new, three-step statistical method, which we call risk-adjusted regression, to address both concerns in settings where decision makers have clearly measurable objectives. In the first step, we use all available covariates to estimate the value, or inversely, the risk, of taking a certain action, such as approving a loan application or hiring a job candidate. Second, we measure disparities in decisions after adjusting for these risk estimates alone, mitigating the problem of included-variable bias. Finally, in the third step, we assess the sensitivity of results to potential mismeasurement of risk, addressing concerns about omitted-variable bias. To do so, we develop a novel, non-parametric sensitivity analysis that yields tight bounds on the true disparity in terms of the average gap between true and estimated risk—a single interpretable parameter that facilitates credible estimates. We demonstrate this approach on a detailed dataset of 2.2 million police stops of pedestrians in New York City, and show that traditional statistical tests of discrimination can substantially underestimate the magnitude of disparities." />
+<meta property="og:description" content="Managers, employers, policymakers, and others often seek to understand whether decisions are biased against certain groups. One popular analytic strategy is to estimate disparities after adjusting for observed covariates, typically with a regression model. This approach, however, suffers from two key statistical challenges. First, omitted-variable bias can skew results if the model does not adjust for all relevant factors; second, and conversely, included-variable bias—a lesser-known phenomenon—can skew results if the set of covariates includes irrelevant factors. Here we introduce a new, three-step statistical method, which we call risk-adjusted regression, to address both concerns in settings where decision makers have clearly measurable objectives. In the first step, we use all available covariates to estimate the value, or inversely, the risk, of taking a certain action, such as approving a loan application or hiring a job candidate. Second, we measure disparities in decisions after adjusting for these risk estimates alone, mitigating the problem of included-variable bias. Finally, in the third step, we assess the sensitivity of results to potential mismeasurement of risk, addressing concerns about omitted-variable bias. To do so, we develop a novel, non-parametric sensitivity analysis that yields tight bounds on the true disparity in terms of the average gap between true and estimated risk—a single interpretable parameter that facilitates credible estimates. We demonstrate this approach on a detailed dataset of 2.2 million police stops of pedestrians in New York City, and show that traditional statistical tests of discrimination can substantially underestimate the magnitude of disparities." />
+<link rel="canonical" href="https://www.jgaeb.com/papers/rar.html" />
+<meta property="og:url" content="https://www.jgaeb.com/papers/rar.html" />
+<meta property="og:site_name" content="Jgaeb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2025-08-19T22:11:34+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Mitigating Omitted- and Included-Variable Bias in Estimates of Disparate Impact" />
+<meta name="twitter:site" content="@jgaeb1" />
+<meta name="twitter:creator" content="@Jongbin Jung" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Jongbin Jung"},"dateModified":"2025-08-19T22:11:34+00:00","datePublished":"2025-08-19T22:11:34+00:00","description":"Managers, employers, policymakers, and others often seek to understand whether decisions are biased against certain groups. One popular analytic strategy is to estimate disparities after adjusting for observed covariates, typically with a regression model. This approach, however, suffers from two key statistical challenges. First, omitted-variable bias can skew results if the model does not adjust for all relevant factors; second, and conversely, included-variable bias—a lesser-known phenomenon—can skew results if the set of covariates includes irrelevant factors. Here we introduce a new, three-step statistical method, which we call risk-adjusted regression, to address both concerns in settings where decision makers have clearly measurable objectives. In the first step, we use all available covariates to estimate the value, or inversely, the risk, of taking a certain action, such as approving a loan application or hiring a job candidate. Second, we measure disparities in decisions after adjusting for these risk estimates alone, mitigating the problem of included-variable bias. Finally, in the third step, we assess the sensitivity of results to potential mismeasurement of risk, addressing concerns about omitted-variable bias. To do so, we develop a novel, non-parametric sensitivity analysis that yields tight bounds on the true disparity in terms of the average gap between true and estimated risk—a single interpretable parameter that facilitates credible estimates. We demonstrate this approach on a detailed dataset of 2.2 million police stops of pedestrians in New York City, and show that traditional statistical tests of discrimination can substantially underestimate the magnitude of disparities.","headline":"Mitigating Omitted- and Included-Variable Bias in Estimates of Disparate Impact","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.jgaeb.com/papers/rar.html"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://www.jgaeb.com/assets/img/headshot.png"},"name":"Jongbin Jung"},"url":"https://www.jgaeb.com/papers/rar.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+  </head>
+  <body>
+    <header>
+      <h1>Johann D. Gaebler</h1>
+      <p class="contact-info"><a href="mailto:me@jgaeb.com">Email</a> • <a href="https://github.com/jgaeb">GitHub</a> • <a href="https://twitter.com/jgaeb1">Twitter</a></contact>
+    </header>
+    <nav>
+      <div class="wrapper-nav-items">
+
+  <div class="nav-item-container">
+    <a href="/" >
+      Home
+    </a>
+  </div>
+
+  <div class="nav-item-container">
+    <a href="/about.html" >
+      About
+    </a>
+  </div>
+
+  <div class="nav-item-container">
+    <a href="/research.html" >
+      Research
+    </a>
+  </div>
+
+  <div class="nav-item-container">
+    <a href="/blog.html" >
+      Blog
+    </a>
+  </div>
+
+</div>
+
+    </nav>
+    <main>
+      <article class="paper">
+  <section>
+    <h1>Mitigating Omitted- and Included-Variable Bias in Estimates of Disparate Impact
+</h1>
+    <p class="authors">Jongbin Jung, Sam Corbett-Davies, Johann D. Gaebler, Ravi Shroff, and Sharad Goel</p>
+    <p class="biblio">
+      Submitted,
+      2024.
+    </p>
+
+    
+
+    
+    <p class="biblio">
+      ArXiv: <a href="https://arxiv.org/abs/1809.05651">1809.05651</a>.
+    </p>
+    
+
+    
+
+    
+
+    <h2>Abstract</h2>
+    <p>Managers, employers, policymakers, and others often seek to understand whether
+decisions are biased against certain groups. One popular analytic strategy is to
+estimate disparities after adjusting for observed covariates, typically with a
+regression model. This approach, however, suffers from two key statistical
+challenges. First, omitted-variable bias can skew results if the model does not
+adjust for all relevant factors; second, and conversely, included-variable
+bias—a lesser-known phenomenon—can skew results if the set of covariates
+includes irrelevant factors. Here we introduce a new, three-step statistical
+method, which we call risk-adjusted regression, to address both concerns in
+settings where decision makers have clearly measurable objectives. In the first
+step, we use all available covariates to estimate the value, or inversely, the
+<em>risk</em>, of taking a certain action, such as approving a loan application or
+hiring a job candidate. Second, we measure disparities in decisions after
+adjusting for these risk estimates alone, mitigating the problem of
+included-variable bias. Finally, in the third step, we assess the sensitivity
+of results to potential mismeasurement of risk, addressing concerns about
+omitted-variable bias. To do so, we develop a novel, non-parametric sensitivity
+analysis that yields tight bounds on the true disparity in terms of the average
+gap between true and estimated risk—a single interpretable parameter that
+facilitates credible estimates. We demonstrate this approach on a detailed
+dataset of 2.2 million police stops of pedestrians in New York City, and show
+that traditional statistical tests of discrimination can substantially
+underestimate the magnitude of disparities.</p>
+
+  </section>
+
+  <section>
+    
+
+    
+  </section>
+</article>
+
+    </main>
+    <footer>
+  
+  <p>
+    &copy; 2021–2025 Johann D. Gaebler.
+    Last updated August 19, 2025.
+  </p>
+</footer>
+
+  </body>
+</html>

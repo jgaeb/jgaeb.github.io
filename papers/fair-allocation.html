@@ -1,0 +1,135 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Fair Allocation through Selective Information Acquisition</title>
+    <link rel="stylesheet" href="/assets/css/styles.css?v=3">
+
+    <!-- Add MathJax Latex Support -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Add Custom Javascript -->
+    
+
+    <link type="application/atom+xml" rel="alternate" href="https://www.jgaeb.com/feed.xml" title="Jgaeb" />
+
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Fair Allocation through Selective Information Acquisition | Jgaeb</title>
+<meta name="generator" content="Jekyll v4.3.2" />
+<meta property="og:title" content="Fair Allocation through Selective Information Acquisition" />
+<meta name="author" content="William Cai" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Public and private institutions must often allocate scare resources under uncertainty. Banks, for example, extend credit to loan applicants based in part on their estimated likelihood of repaying a loan. But when the quality of information differs across candidates (e.g., if some applicants lack traditional credit histories), common lending strategies can lead to disparities across groups. Here we consider a setting in which decision makers—before allocating resources—can choose to spend some of their limited budget further screening select individuals. We present a computationally efficient algorithm for deciding whom to screen that maximizes a standard measure of social welfare. Intuitively, decision makers should screen candidates on the margin, for whom the additional information could plausibly alter the allocation. We formalize this idea by showing the problem can be reduced to solving a series of linear programs. Both on synthetic and real-world datasets, this strategy improves utility, illustrating the value of targeted information acquisition in such decisions. Further, when there is social value for distributing resources to groups for whom we have a priori poor information—like those without credit scores—our approach can substantially improve the allocation of limited assets." />
+<meta property="og:description" content="Public and private institutions must often allocate scare resources under uncertainty. Banks, for example, extend credit to loan applicants based in part on their estimated likelihood of repaying a loan. But when the quality of information differs across candidates (e.g., if some applicants lack traditional credit histories), common lending strategies can lead to disparities across groups. Here we consider a setting in which decision makers—before allocating resources—can choose to spend some of their limited budget further screening select individuals. We present a computationally efficient algorithm for deciding whom to screen that maximizes a standard measure of social welfare. Intuitively, decision makers should screen candidates on the margin, for whom the additional information could plausibly alter the allocation. We formalize this idea by showing the problem can be reduced to solving a series of linear programs. Both on synthetic and real-world datasets, this strategy improves utility, illustrating the value of targeted information acquisition in such decisions. Further, when there is social value for distributing resources to groups for whom we have a priori poor information—like those without credit scores—our approach can substantially improve the allocation of limited assets." />
+<link rel="canonical" href="https://www.jgaeb.com/papers/fair-allocation.html" />
+<meta property="og:url" content="https://www.jgaeb.com/papers/fair-allocation.html" />
+<meta property="og:site_name" content="Jgaeb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2025-08-19T22:11:34+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Fair Allocation through Selective Information Acquisition" />
+<meta name="twitter:site" content="@jgaeb1" />
+<meta name="twitter:creator" content="@William Cai" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"William Cai"},"dateModified":"2025-08-19T22:11:34+00:00","datePublished":"2025-08-19T22:11:34+00:00","description":"Public and private institutions must often allocate scare resources under uncertainty. Banks, for example, extend credit to loan applicants based in part on their estimated likelihood of repaying a loan. But when the quality of information differs across candidates (e.g., if some applicants lack traditional credit histories), common lending strategies can lead to disparities across groups. Here we consider a setting in which decision makers—before allocating resources—can choose to spend some of their limited budget further screening select individuals. We present a computationally efficient algorithm for deciding whom to screen that maximizes a standard measure of social welfare. Intuitively, decision makers should screen candidates on the margin, for whom the additional information could plausibly alter the allocation. We formalize this idea by showing the problem can be reduced to solving a series of linear programs. Both on synthetic and real-world datasets, this strategy improves utility, illustrating the value of targeted information acquisition in such decisions. Further, when there is social value for distributing resources to groups for whom we have a priori poor information—like those without credit scores—our approach can substantially improve the allocation of limited assets.","headline":"Fair Allocation through Selective Information Acquisition","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.jgaeb.com/papers/fair-allocation.html"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://www.jgaeb.com/assets/img/headshot.png"},"name":"William Cai"},"url":"https://www.jgaeb.com/papers/fair-allocation.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+  </head>
+  <body>
+    <header>
+      <h1>Johann D. Gaebler</h1>
+      <p class="contact-info"><a href="mailto:me@jgaeb.com">Email</a> • <a href="https://github.com/jgaeb">GitHub</a> • <a href="https://twitter.com/jgaeb1">Twitter</a></contact>
+    </header>
+    <nav>
+      <div class="wrapper-nav-items">
+
+  <div class="nav-item-container">
+    <a href="/" >
+      Home
+    </a>
+  </div>
+
+  <div class="nav-item-container">
+    <a href="/about.html" >
+      About
+    </a>
+  </div>
+
+  <div class="nav-item-container">
+    <a href="/research.html" >
+      Research
+    </a>
+  </div>
+
+  <div class="nav-item-container">
+    <a href="/blog.html" >
+      Blog
+    </a>
+  </div>
+
+</div>
+
+    </nav>
+    <main>
+      <article class="paper">
+  <section>
+    <h1>Fair Allocation through Selective Information Acquisition</h1>
+    <p class="authors">William Cai, Johann D. Gaebler, Nikhil Garg, and Sharad Goel</p>
+    <p class="biblio">
+      <em>Proceedings of the AAAI/ACM Conference on AI, Ethics, and Society</em>,
+      2020.
+    </p>
+
+    
+
+    
+    <p class="biblio">
+      ArXiv: <a href="https://arxiv.org/abs/1911.02715">1911.02715</a>.
+    </p>
+    
+
+    
+
+    
+
+    <h2>Abstract</h2>
+    <p>Public and private institutions must often allocate scare resources under
+uncertainty. Banks, for example, extend credit to loan applicants based in part
+on their estimated likelihood of repaying a loan. But when the quality of
+information differs across candidates (e.g., if some applicants lack
+traditional credit histories), common lending strategies can lead to
+disparities across groups. Here we consider a setting in which decision
+makers—before allocating resources—can choose to spend some of their limited
+budget further screening select individuals. We present a computationally
+efficient algorithm for deciding whom to screen that maximizes a standard
+measure of social welfare. Intuitively, decision makers should screen
+candidates on the margin, for whom the additional information could plausibly
+alter the allocation. We formalize this idea by showing the problem can be
+reduced to solving a series of linear programs. Both on synthetic and
+real-world datasets, this strategy improves utility, illustrating the value of
+targeted information acquisition in such decisions. Further, when there is
+social value for distributing resources to groups for whom we have <em>a priori</em>
+poor information—like those without credit scores—our approach can
+substantially improve the allocation of limited assets.</p>
+
+  </section>
+
+  <section>
+    
+
+    
+  </section>
+</article>
+
+    </main>
+    <footer>
+  
+  <p>
+    &copy; 2021–2025 Johann D. Gaebler.
+    Last updated August 19, 2025.
+  </p>
+</footer>
+
+  </body>
+</html>

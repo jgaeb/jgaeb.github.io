@@ -1,0 +1,586 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>The Measure and Mismeasure of Fairness</title>
+    <link rel="stylesheet" href="/assets/css/styles.css?v=3">
+
+    <!-- Add MathJax Latex Support -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Add Custom Javascript -->
+    
+      <script type="text/javascript" src="/assets/js/post.js"></script>
+    
+
+    <link type="application/atom+xml" rel="alternate" href="https://www.jgaeb.com/feed.xml" title="Jgaeb" />
+
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>The Measure and Mismeasure of Fairness | Jgaeb</title>
+<meta name="generator" content="Jekyll v4.3.2" />
+<meta property="og:title" content="The Measure and Mismeasure of Fairness" />
+<meta name="author" content="Johann D. Gaebler" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="It’s become something of a cliche that algorithms are everywhere. An enormous number papers—including many of my own!—begin with some variation on the following: Algorithmic decision-making systems are increasingly used to make decisions that affect people&#39;s lives in health care, criminal justice, lending, college admissions, hiring, and more. That means that, like the human decision-makers they&#39;ve replaced, biases in these systems can harm racial and gender minorities or other marginalized groups. The cliche remains relevant because the problem is real: algorithms do make increasingly important decisions, sometimes to disastrous effect. The question, though, is, what should we do about it?" />
+<meta property="og:description" content="It’s become something of a cliche that algorithms are everywhere. An enormous number papers—including many of my own!—begin with some variation on the following: Algorithmic decision-making systems are increasingly used to make decisions that affect people&#39;s lives in health care, criminal justice, lending, college admissions, hiring, and more. That means that, like the human decision-makers they&#39;ve replaced, biases in these systems can harm racial and gender minorities or other marginalized groups. The cliche remains relevant because the problem is real: algorithms do make increasingly important decisions, sometimes to disastrous effect. The question, though, is, what should we do about it?" />
+<link rel="canonical" href="https://www.jgaeb.com/2023/11/04/measure-mismeasure.html" />
+<meta property="og:url" content="https://www.jgaeb.com/2023/11/04/measure-mismeasure.html" />
+<meta property="og:site_name" content="Jgaeb" />
+<meta property="og:image" content="https://www.jgaeb.com/assets/images/causal-fairness-cover.png" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2023-11-04T00:00:00+00:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://www.jgaeb.com/assets/images/causal-fairness-cover.png" />
+<meta property="twitter:title" content="The Measure and Mismeasure of Fairness" />
+<meta name="twitter:site" content="@jgaeb1" />
+<meta name="twitter:creator" content="@Johann D. Gaebler" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Johann D. Gaebler"},"dateModified":"2023-11-04T00:00:00+00:00","datePublished":"2023-11-04T00:00:00+00:00","description":"It’s become something of a cliche that algorithms are everywhere. An enormous number papers—including many of my own!—begin with some variation on the following: Algorithmic decision-making systems are increasingly used to make decisions that affect people&#39;s lives in health care, criminal justice, lending, college admissions, hiring, and more. That means that, like the human decision-makers they&#39;ve replaced, biases in these systems can harm racial and gender minorities or other marginalized groups. The cliche remains relevant because the problem is real: algorithms do make increasingly important decisions, sometimes to disastrous effect. The question, though, is, what should we do about it?","headline":"The Measure and Mismeasure of Fairness","image":"https://www.jgaeb.com/assets/images/causal-fairness-cover.png","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.jgaeb.com/2023/11/04/measure-mismeasure.html"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://www.jgaeb.com/assets/img/headshot.png"},"name":"Johann D. Gaebler"},"url":"https://www.jgaeb.com/2023/11/04/measure-mismeasure.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+  </head>
+  <body>
+    <header>
+      <h1>Johann D. Gaebler</h1>
+      <p class="contact-info"><a href="mailto:me@jgaeb.com">Email</a> • <a href="https://github.com/jgaeb">GitHub</a> • <a href="https://twitter.com/jgaeb1">Twitter</a></contact>
+    </header>
+    <nav>
+      <div class="wrapper-nav-items">
+
+  <div class="nav-item-container">
+    <a href="/" >
+      Home
+    </a>
+  </div>
+
+  <div class="nav-item-container">
+    <a href="/about.html" >
+      About
+    </a>
+  </div>
+
+  <div class="nav-item-container">
+    <a href="/research.html" >
+      Research
+    </a>
+  </div>
+
+  <div class="nav-item-container">
+    <a href="/blog.html" >
+      Blog
+    </a>
+  </div>
+
+</div>
+
+    </nav>
+    <main>
+      <article class="blog">
+  <div class="title">
+    <h1>The Measure and Mismeasure of Fairness</h1>
+    
+      <h2>Constraining inequity in algorithm and policy design</h2>
+    
+  </div>
+  <p class="date">November 4th, 2023</p>
+  <p class="rep-materials">
+    
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </p>
+
+  
+    <figure class="cover">
+      
+      
+        
+      
+        
+      
+        
+          
+          
+      
+      <img src="/assets/images/causal-fairness-cover.svg" alt="">
+      
+    </figure>
+
+
+  <p>It’s become something of a cliche that algorithms are everywhere. An enormous
+number papers—including many of my own!—begin with some variation on the
+following:</p>
+<blockquote>
+    Algorithmic decision-making systems are increasingly used to make decisions
+    that affect people's lives in health care, criminal justice, lending,
+    college admissions, hiring, and more. That means that, like the human
+    decision-makers they've replaced, biases in these systems can harm racial
+    and gender minorities or other marginalized groups.
+</blockquote>
+<p>The cliche remains relevant because the problem is real: algorithms <em>do</em> make
+increasingly important decisions, sometimes to
+<a href="https://www.wsj.com/articles/researchers-find-racial-bias-in-hospital-algorithm-11571941096">disastrous effect</a>.
+The question, though, is, what should we do about it?</p>
+
+<p>The field of algorithmic fairness, now entering its second decade, has largely
+focused on the idea of fairness <em>constraints</em>: an algorithm is unfair
+when some metric—like
+<a href="https://en.wikipedia.org/wiki/Precision_and_recall">recall</a>, the <a href="https://en.wikipedia.org/wiki/False_positive_rate">false
+positive rate</a>, or,
+increasingly, more exotic causal analogues—is not equal across groups. In
+<a href="https://jmlr.org/papers/v24/22-1511.html">our new paper</a>, my co-authors and I
+argue that this approach has unintended consequences that essentially always
+harm the groups these constraints were designed to protect. Instead of thinking
+of algorithmic fairness as a problem of design constraints, we argue that it we
+should approach it the way we approach policy problems—by grappling directly
+with the hard tradeoffs that raise questions of fairness in the first place.</p>
+
+<h2 id="the-two-cultures-of-fairness">The two cultures of fairness</h2>
+
+<p>Most existing fairness constraints seem to come from two different intuitions
+about what it means for an algorithm to be fair. The first intuition is that
+decision makers shouldn’t use protected characteristics to make decisions. The
+second intuition is that if decision makers are making decisions fairly, then we
+shouldn’t expect to see good things and bad things distributed differently
+across groups. More succinctly, an algorithm designer might try to:</p>
+<ol>
+  <li>Limit the effect of <em>protected characteristics</em> on <em>decisions,</em> or</li>
+  <li>Limit the effect of <em>decisions</em> on <em>outcomes.</em><sup id="fnref:0" role="doc-noteref"><a href="#fn:0" class="footnote" rel="footnote">1</a></sup></li>
+</ol>
+
+<p>The simplest fairness constraint of all, blinding, is an example of the first
+type: it prevents the algorithm from directly using protected characteristics
+at all. Other common constraints, like demographic parity, equalized false
+positive rates, and equalized odds, are examples of the second type: they seek to limit
+disparities—in, respectively, the proportion of positive decisions, the false
+positive rate, or both the false positive <em>and</em> false negative rates—across
+groups.</p>
+
+<p>More recently, a significant amount of work in the fairness literature has
+sought to account for the causal way in which these decisions are made. For example,
+removing race from a model’s input data doesn’t necessarily remove the effects
+of discrimination on other features the model might use, like zip code or
+income. In a similar way, it seems more natural to want to equalize the rate at
+which at which loans are approved among men and women who <em>would repay them</em> than
+among those who <em>did</em>, since the latter category is itself influenced by the
+decision to lend. But all these constraints—causal or not—fail to spread society’s
+burdens and rewards evenly across groups for similar reasons.</p>
+
+<h2 id="diabetes-screening">Diabetes screening</h2>
+
+<p>To understand how fairness constraints go awry, it’s helpful to think about a
+concrete problem. An estimated
+<a href="https://www.cdc.gov/diabetes/library/spotlights/diabetes-facts-stats.html">40 million Americans have diabetes</a>.
+Early detection and preventative treatment can have long-term health benefits.
+But screening for diabetes has costs, too: in addition to taking time off of
+work to go to the doctor, it requires a blood test, and the test itself is not
+free. Suffice to say that if we somehow <em>knew</em> that someone <em>would not</em> develop
+diabetes, we would not subject them to a screening.</p>
+
+<p>Now, imagine that you’ve been tasked with helping doctors figure out whom they
+should screen. To make that possible, you have historical data from a large
+representative survey which includes true, ground-truth labels for whether each
+person has diabetes, as well as a variety of other information like age, race,
+and BMI.<sup id="fnref:1" role="doc-noteref"><a href="#fn:1" class="footnote" rel="footnote">2</a></sup></p>
+
+<p>To help understand what to do, it’s useful to think about the screening problem
+from the patient’s perspective. Relative to the baseline of not screening them,
+two things can happen to a patient who <em>is</em> screened: either they <em>don’t</em> have
+diabetes, in which case we’ve imposed the costs of screening on them—let’s
+call them \(c_{\text{test}}\)—but they won’t see any benefit; or they <em>do</em>
+have it, in which case we’ve still imposed the costs of screening on them, but
+they’ll also be able to receive treatment with some benefits
+\(b_{\text{treat}}\).</p>
+
+<figure>
+<p><img src="/assets/posts/measure-mismeasure/decision-tree.svg" alt="Decision process for diabetes screening from patient's perspective" /></p>
+  <figcaption>Decision process for diabetes screening from patient’s perspective.</figcaption>
+</figure>
+
+<p>When we make the decision, we don’t know whether the patient has diabetes or
+not. But, based on the historical data, we might know something about their
+risk of diabetes, which we denote by \(r(x)\). A patient who thought they had
+a very <em>high</em> chance of developing diabetes would probably want to be screened
+since they would be likely to benefit from treatment; a patient who thought
+they had a very <em>low</em> chance of developing diabetes would probably prefer to
+avoid the hassle and discomfort of the test. Patients in the middle might be
+indifferent. The key quantity—how much a patient expects to benefit from
+screening <em>when we have to make our decision</em>—is therefore:<sup id="fnref:2" role="doc-noteref"><a href="#fn:2" class="footnote" rel="footnote">3</a></sup></p>
+
+<p>\[\text{benefit of screening}=r(x)\cdot b_{\text{treat}}-c_{\text{test}}.\]</p>
+
+<p>In particular, the patients who will, in expectation, benefit from screening
+are exactly those whose <em>risk</em> exceeds the cost-benefit ratio:</p>
+
+<p>\[r(x)&gt;\frac{c_{\text{test}}}{b_{\text{treat}}}.\]</p>
+
+<p>Thus, the natural thing to do is to try, as best as we are able, to estimate
+patients’ risk of developing diabetes, and screen exactly those people whose
+risk exceeds their cost-benefit ratio. The key point, though, is that <em>any
+other way</em> of deciding whom to screen requires harming some patients, either by
+screening people who don’t need to be screened or by failing to screen people
+who do.</p>
+
+<h2 id="inframarginality">Inframarginality</h2>
+
+<p>The principles discussed in the diabetes screening example above come into
+conflict with fairness constraints because of a phenomenon called
+“inframarginality.” To be even more concrete, let’s look at the <em>actual</em>
+distribution of diabetes risk in both White and Asian Americans.<sup id="fnref:3" role="doc-noteref"><a href="#fn:3" class="footnote" rel="footnote">4</a></sup></p>
+
+<figure>
+<p><img src="/assets/posts/measure-mismeasure/risk-distributions.svg" alt="Distribution of diabetes risk in White and Asian Americans" /></p>
+  <figcaption>Distribution of diabetes risk in White and Asian Americans. The solid black line shows a 1.5% decision threshold, and the dotted lines show the group-level average risks. At this threshold, more Asian (81%) than White (69%) Americans are screened.</figcaption>
+</figure>
+
+<p>These distributions are quite different: the baseline risk of having diabetes
+for Asian Americans is 11%, as compared to 9% for White Americans.
+Consequently, more Asian Americans than White Americans are screened under the
+current guidelines, which correspond to a 1.5% decision threshold.<sup id="fnref:4" role="doc-noteref"><a href="#fn:4" class="footnote" rel="footnote">5</a></sup> The
+false positive rates are also different: 79% for Asian Americans, and 67% for
+White Americans. The false negative rates and other metrics likewise differ.</p>
+
+<p>All of these error metrics differ across these two populations because they are
+<em>inframarginal</em>: measure not <em>only</em> the quality of the decision, but <em>also</em> the
+distribution of how difficult the outcome is to predict. They were developed to
+compared different models performance on the same dataset—in which case, only
+model performance varies. But when we use them to compare different groups,
+differences in these metrics could reflect either differences in decision
+quality <em>or</em> differences in the distribution of risk.</p>
+
+<p>As a result when distributions of risk differ—which, for straightforward
+statistical reasons, they almost always do—equalizing these metrics comes at
+the cost of making worse decisions. To equalize the false positive rates in our
+diabetes screening example, we would have to lower the decision threshold for
+White Americans—screening some people for whom the costs of screening exceed
+the benefits—and raise it for Asian Americans—failing to screen some people
+for whom the benefits of screening exceed the costs. To be clear, it is
+possible that in some cases the risk distributions and decision threshold will
+be such that we can equalize error metrics without harming anyone, but, as we
+show formally in the paper, these cases are so rare that they are
+statistically impossible.</p>
+
+<h2 id="externalities">Externalities</h2>
+
+<p>The diabetes screening example has one important simplification that really
+clarifies the problem of fairness constraints. There really aren’t any
+externalities: if I get screened, it has no impact on whether you get can get
+screened. In many real-world problems, this isn’t the case, because decisions
+come with externalities. For instance, a shortage of diabetes screening kits
+would change things so that if I get screened, you may not be able to.</p>
+
+<p>In cases with externalities, the tradeoffs are not only between costs and
+benefits for an individual person, but also, unavoidably, between different
+people. In these cases, problems of equity are often more acute. In college
+admissions, for instance, students who have the highest chance of graduating
+may be so in part because they attended strong high schools or have other
+advantages; prioritizing them in admissions necessarily requires deprioritizing
+other students who were less lucky. Even so, ensuring that many students are
+able to graduate from college is an important social good in its own right.</p>
+
+<p>In these cases, people can reasonably disagree about how, exactly, to balance
+between competing objectives. A useful tool for thinking about these tradeoffs
+is the <em>Pareto frontier.</em> The decisions lying on the Pareto frontier are those
+for which there is no “free lunch”: doing any better at achieving one goal
+comes at the cost of doing worse on another.</p>
+
+<figure>
+<p><img src="/assets/posts/measure-mismeasure/frontier.svg" alt="The Pareto frontier in a simulated admissions problem" /></p>
+  <figcaption>The Pareto frontier in a simulated admissions problem where, because of structural barriers, students from the target group are on average less likely to graduate. The red point shows the policy that results in the greatest possible number of students graduating, while the blue point (\(\lambda = \tfrac 1 4\)) shows a policy resulting from trading off between degree attainment and admitting a diverse class. The Pareto frontier itself comes from sweeping over all possible values of \(\lambda\). The purple point illustrates the cost of implementing counterfactual fairness.</figcaption>
+</figure>
+
+<p>The figure shows a simulation of the admissions scenario described above. The
+purple frontier shows those admissions policies for which the number of
+students who attain a bachelor’s degree cannot be increased without decreasing
+the enrollment of students from a target group. Choosing which point to occupy
+on the Pareto frontier to occupy is hard; choosing to be <em>on</em> the Pareto
+frontier is easy. Any policy that is not on the Pareto frontier can be
+straightforwardly improved to one that is without making any tradeoffs.<sup id="fnref:5" role="doc-noteref"><a href="#fn:5" class="footnote" rel="footnote">6</a></sup>
+And—although the mathematics involved is more complicated<sup id="fnref:6" role="doc-noteref"><a href="#fn:6" class="footnote" rel="footnote">7</a></sup>—as in the
+simpler diabetes example, enforcing most fairness constraints comes at a cost.
+In the case of
+<a href="https://en.wikipedia.org/wiki/Fairness_(machine_learning)#Causality-based_metrics">counterfactual fairness</a>,
+the cost is substantial because, as we prove in the paper, counterfactual
+fairness, in realistic settings, turns out to be equivalent to running a fully
+randomized lottery.<sup id="fnref:7" role="doc-noteref"><a href="#fn:7" class="footnote" rel="footnote">8</a></sup> While the cost may vary from case to case, even in
+these more complicated settings, fairness constraints require some sacrifice on
+the part of the groups they are designed to protect.</p>
+
+<h3 id="constraints-dont-help-you-make-tradeoffs-when-there-are-externalities">Constraints don’t help you make tradeoffs when there are externalities</h3>
+
+<p>Some fairness constraints, like equalized false positive rates or demographic
+parity, are sufficiently simple that in decision making scenarios with
+externalities, they are compatible with the Pareto frontier—but only a single
+point of it. Sometimes, this is taken to be a feature: the constraint solves
+the hard problem of picking a what trade-off to make. But there’s no reason why
+the trade-off they make is sensible or in any way related to our values.</p>
+
+<figure>
+<p><img src="/assets/posts/measure-mismeasure/cmc.svg" alt="The Pareto frontier for admission to a high-risk care management program in Obermeyer et al. (2019) for the population as a whole, and among women aged 25 to 34" /></p>
+  <figcaption>The Pareto frontier for admission to a high-risk care management program in Obermeyer et al. (2019). Left: The Pareto frontier for all patients. Because Black patients incur high medical costs in the population as a whole, equalizing false negative rates (FNR)—as well as false positive rates (FPR), or demographic parity (DP)—results in fewer Black patients being admitted than under a policy that simply maximizes the admission of high-cost patients. Right: The Pareto frontier for the subpopulation of women aged 25 to 34. Black patients in this subpopulation incur lower medical costs, and so all three constraints increase the number of admissions of Black patients.</figcaption>
+</figure>
+
+<p>The plot above shows data from
+<a href="https://www.science.org/doi/10.1126/science.aax2342">Obermeyer et al. (2019)</a>,
+who study admissions to a high-risk care management program used by hospitals
+to ensure that patients with complex medical needs receive adequate care. Black
+patients in this data incur higher higher medical costs than White patients, a
+gap likely caused by worse access to care due to a variety of socioeconomic
+factors and discrimination. This means that equalizing false negative rates,
+false positive rates, or achieving demographic parity all result in fewer Black
+patients being admitted to the program than a policy that simply maximizes the
+admission of high-cost patients. Medical costs are, as the authors argue, a
+poor proxy of medical need. Black patients at the same level of cost tend to be
+sicker than White patients, again likely because of worse access to care. Thus,
+in this case, equalizing error rates actually <em>worsens</em>, rather than improves,
+equity.<sup id="fnref:8" role="doc-noteref"><a href="#fn:8" class="footnote" rel="footnote">9</a></sup></p>
+
+<p>Sometimes fairness constraints pull our decisions in the “right direction,” as
+they do in the subpopulation of women aged 25 to 34 shown in the right-hand
+plot. But because of inframarginality, error rates that are equalized in one
+population are essentially guaranteed not to be equalized in another
+population, or in a subpopulation. Letting error rates guide how we choose a
+point on the Pareto frontier would entail strange consequences, for instance
+that the relative values of equity and medical care are necessarily different
+for women between 25 and 34 than they are for the population as a whole, or for
+patients living in Milwaukee than they are for patients living in Boston—and,
+moreover, differ in ways that are hard to predict in advance.</p>
+
+<p>Perhaps most importantly, if we only enforce fairness constraints only when they
+are broadly in agreement with other policy objectives, like increasing access
+to care among Black patients, then we don’t really think the constraints
+capture what it means for something to be “fair.” Instead, we should just
+target the policy objectives that we care about directly, rather than
+needlessly paying the cost the fairness constraints impose.</p>
+
+<h2 id="tradeoffs-are-sometimes-worth-it">Tradeoffs are sometimes worth it</h2>
+
+<p>I don’t want to overstate our case. Fairness constraints do always come at a
+cost to the people they’re intended to protect, and this cost is often
+substantial and hard to justify except in terms of other policy objectives we
+could have pursued directly. But sometimes constraints can have costs that
+<em>are</em>—or at least could be—worth it. Model blinding offers a good example.
+<a href="https://arxiv.org/pdf/2306.10220.pdf">Coots et al. (2023)</a> study race-blind
+risk models in diabetes screening. While blind models are miscalibrated and
+perform worse, in practice, the impact of this miscalibration is small, because
+the screening decisions for most people don’t change. Moreover, the people for
+whom the screening decision does change almost all have risks very close to the
+decision threshold, meaning that they are close to indifferent to whether they
+are screened or not.</p>
+
+<p>Even if the direct harm to patients is small, it would still be illegitimate to
+inflict it pointlessly. But, as the authors argue:</p>
+<blockquote>
+    Including race and ethnicity as inputs to predictive models may, for
+    instance, inadvertently reinforce pernicious attitudes of biological
+    determinism or lead to greater stigmatization of individuals who are
+    already marginalized. In part for these reasons, several hospitals have
+    recently moved away from reporting race-adjusted glomerular filtration rate
+    estimates, instead reporting a race-unaware value, both to avoid race-based
+    predictions and to mitigate concerns that a race-aware model may
+    deprioritize Black patients for kidney transplantation.
+</blockquote>
+<p>Weighing these costs against decreased model predictivity is challenging, but
+it is at least plausible that race-aware models generate negative externalities
+that outweigh their costs. For most other fairness constraints, however, this
+point is much less clear. It is not clear what negative externalities are
+generated by unequal false positive rates, for example—quantities that are
+difficult to observe and interpret, and which, as explored above, do not
+correspond to group welfare. Certainly, robust arguments justifying the costs
+fairness constraints impose on the groups they are intended to protect are
+seriously lacking in the algorithmic fairness literature as it exists today.</p>
+
+<h2 id="a-more-democratic-approach">A more democratic approach</h2>
+
+<p>While this post focuses largely on unpacking our criticism of constraint-based
+notions of fairness, we also try to offer a positive vision for how to approach
+questions of equity in algorithm and policy design. In particular, we encourage
+practitioners to look beyond model predictions and error rates, and to think
+more carefully about how their models fit into the broader policy context. We
+encourage practitioners to focus on issues like collecting representative
+data, which are often needed for models to perform well across groups <em>because</em>
+of the distributional differences that cause inframarginality. We advise
+carefully choosing targets of prediction and thinking through the causal
+structure of the policy problem to ensure that the model is well-suited to
+achieving one’s actual policy goals. Most of all, we encourage policymakers and
+algorithm designers to grapple <em>directly</em> with the hard tradeoffs that raise
+algorithmic fairness issues in the first place.</p>
+
+<p>To be clear, weighing the costs and benefits of different policies is <em>very</em>
+hard. Many approaches in algorithmic fairness seem motivated, at least in part,
+by a desire to short-circuit difficult discussions about these issues. But we
+hope that our work illustrates why we should resist this impulse. Fairness
+constraints don’t use information about people’s preferences. But, in a
+democratic society, it <em>shouldn’t</em> be possible to technocratically sidestep
+public debates of real tradeoffs, tradeoffs about which reasonable people can
+disagree. Our hope is that this work encourages a new approach to questions of
+equity in algorithm and policy design. To avoid the costs associated with
+fairness constraints, we should instead embraces the profoundly challenging but
+ultimately <em>non-technical</em> problem of aggregating different people’s
+preferences for how society navigates tough choices.</p>
+<div class="footnotes" role="doc-endnotes">
+  <ol>
+    <li id="fn:0" role="doc-endnote">
+      <p>This is related to a different mantra we’ve tried to express elsewhere.
+The law distinguishes between
+<a href="https://en.wikipedia.org/wiki/Disparate_treatment">disparate treatment</a>
+and
+<a href="https://en.wikipedia.org/wiki/Disparate_impact">disparate impact</a>. Most
+discrimination literature primarily focuses on disparate treatment—“the
+effect of <em>race</em> on <em>decisions</em>”—but more attention is needed on
+disparate impact—“the effect of <em>decisions</em> on <em>racial disparities</em>.” <a href="#fnref:0" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:1" role="doc-endnote">
+      <p>These aren’t necessarily the most predictive covariates; they just happen to be the
+covariates actually used by the
+<a href="https://www.uspreventiveservicestaskforce.org/uspstf/recommendation/screening-for-prediabetes-and-type-2-diabetes">US Preventive Services Task Force</a>
+for its screening recommendations. <a href="#fnref:1" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:2" role="doc-endnote">
+      <p>This is a simplification, of course. In reality, the patient’s preferences
+might depend on the costs of treatment, the severity of the disease, and
+other factors, all of which are readily incorporated into this framework.
+There might also be negative externalities, which do change things and
+which we discuss below. <a href="#fnref:2" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:3" role="doc-endnote">
+      <p>The data come from the
+<a href="https://www.cdc.gov/nchs/nhanes/index.htm">National Health and Nutrition Examination Survey</a>.
+Risks are estimated using logistic regression and the features listed
+above, as in <a href="https://doi.org/10.7326/m20-8079">Aggarwal et al. (2022)</a> <a href="#fnref:3" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:4" role="doc-endnote">
+      <p>The USPSTF’s guidelines are not expressed in terms of a risk threshold,
+but are equivalent to this threshold for White Americans; see
+<a href="https://doi.org/10.7326/m20-8079">Aggarwal et al. (2022)</a>. In
+practice, it’s unclear to what extent this threshold really balances the
+costs and benefits of screening, but it’s a useful benchmark. Nothing about
+the example would change if we used a different threshold, or even if we
+allowed individual patients to choose their own thresholds. <a href="#fnref:4" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:5" role="doc-endnote">
+      <p>To be clear, in real life, admissions involves more than these two
+objectives. Incorporating other objectives doesn’t change the basic
+argument, though—it just makes the Pareto frontier higher-dimensional. <a href="#fnref:5" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:6" role="doc-endnote">
+      <p>See my earlier blog post on <a href="/2022/07/18/prevalence.html">prevalence</a>. <a href="#fnref:6" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:7" role="doc-endnote">
+      <p>This result depends on counterfactuals being non-deterministic, in the
+sense that individuals who are observationally equivalent to the
+decision maker nevertheless may have different counterfactual outcomes. To
+the extent that such counterfactuals even make sense (see, e.g.,
+<a href="https://arxiv.org/pdf/2006.12460.pdf">Gaebler et al. (2022)</a> for some
+discussion of this), the extremely complex causal structure of the world
+means that two individuals who, for instance, have the same race and SAT
+score might nevertheless have very different SAT scores for any number of
+reasons in worlds in which their races were somehow altered. For the formal
+statement, see Theorem 11 in the paper. <a href="#fnref:7" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:8" role="doc-endnote">
+      <p>Looking at cost, rather than medical needs, is a fairness mistake in its
+own right, but of a very different kind than can be captured by fairness
+constraints. I discuss label bias and related issues below. <a href="#fnref:8" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+</article>
+
+    </main>
+    <footer>
+  
+  <p>
+    &copy; 2021–2025 Johann D. Gaebler.
+    Last updated August 19, 2025.
+  </p>
+</footer>
+
+  </body>
+</html>

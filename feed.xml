@@ -1,0 +1,1702 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator><link href="https://www.jgaeb.com/feed.xml" rel="self" type="application/atom+xml" /><link href="https://www.jgaeb.com/" rel="alternate" type="text/html" /><updated>2025-08-19T22:11:34+00:00</updated><id>https://www.jgaeb.com/feed.xml</id><title type="html">Jgaeb</title><subtitle>Johann D. Gaebler&apos;s Personal Website</subtitle><author><name>Johann D. Gaebler</name></author><entry><title type="html">The Measure and Mismeasure of Fairness</title><link href="https://www.jgaeb.com/2023/11/04/measure-mismeasure.html" rel="alternate" type="text/html" title="The Measure and Mismeasure of Fairness" /><published>2023-11-04T00:00:00+00:00</published><updated>2023-11-04T00:00:00+00:00</updated><id>https://www.jgaeb.com/2023/11/04/measure-mismeasure</id><content type="html" xml:base="https://www.jgaeb.com/2023/11/04/measure-mismeasure.html"><![CDATA[<p>It’s become something of a cliche that algorithms are everywhere. An enormous
+number papers—including many of my own!—begin with some variation on the
+following:</p>
+<blockquote>
+    Algorithmic decision-making systems are increasingly used to make decisions
+    that affect people's lives in health care, criminal justice, lending,
+    college admissions, hiring, and more. That means that, like the human
+    decision-makers they've replaced, biases in these systems can harm racial
+    and gender minorities or other marginalized groups.
+</blockquote>
+<p>The cliche remains relevant because the problem is real: algorithms <em>do</em> make
+increasingly important decisions, sometimes to
+<a href="https://www.wsj.com/articles/researchers-find-racial-bias-in-hospital-algorithm-11571941096">disastrous effect</a>.
+The question, though, is, what should we do about it?</p>
+
+<p>The field of algorithmic fairness, now entering its second decade, has largely
+focused on the idea of fairness <em>constraints</em>: an algorithm is unfair
+when some metric—like
+<a href="https://en.wikipedia.org/wiki/Precision_and_recall">recall</a>, the <a href="https://en.wikipedia.org/wiki/False_positive_rate">false
+positive rate</a>, or,
+increasingly, more exotic causal analogues—is not equal across groups. In
+<a href="https://jmlr.org/papers/v24/22-1511.html">our new paper</a>, my co-authors and I
+argue that this approach has unintended consequences that essentially always
+harm the groups these constraints were designed to protect. Instead of thinking
+of algorithmic fairness as a problem of design constraints, we argue that it we
+should approach it the way we approach policy problems—by grappling directly
+with the hard tradeoffs that raise questions of fairness in the first place.</p>
+
+<h2 id="the-two-cultures-of-fairness">The two cultures of fairness</h2>
+
+<p>Most existing fairness constraints seem to come from two different intuitions
+about what it means for an algorithm to be fair. The first intuition is that
+decision makers shouldn’t use protected characteristics to make decisions. The
+second intuition is that if decision makers are making decisions fairly, then we
+shouldn’t expect to see good things and bad things distributed differently
+across groups. More succinctly, an algorithm designer might try to:</p>
+<ol>
+  <li>Limit the effect of <em>protected characteristics</em> on <em>decisions,</em> or</li>
+  <li>Limit the effect of <em>decisions</em> on <em>outcomes.</em><sup id="fnref:0" role="doc-noteref"><a href="#fn:0" class="footnote" rel="footnote">1</a></sup></li>
+</ol>
+
+<p>The simplest fairness constraint of all, blinding, is an example of the first
+type: it prevents the algorithm from directly using protected characteristics
+at all. Other common constraints, like demographic parity, equalized false
+positive rates, and equalized odds, are examples of the second type: they seek to limit
+disparities—in, respectively, the proportion of positive decisions, the false
+positive rate, or both the false positive <em>and</em> false negative rates—across
+groups.</p>
+
+<p>More recently, a significant amount of work in the fairness literature has
+sought to account for the causal way in which these decisions are made. For example,
+removing race from a model’s input data doesn’t necessarily remove the effects
+of discrimination on other features the model might use, like zip code or
+income. In a similar way, it seems more natural to want to equalize the rate at
+which at which loans are approved among men and women who <em>would repay them</em> than
+among those who <em>did</em>, since the latter category is itself influenced by the
+decision to lend. But all these constraints—causal or not—fail to spread society’s
+burdens and rewards evenly across groups for similar reasons.</p>
+
+<h2 id="diabetes-screening">Diabetes screening</h2>
+
+<p>To understand how fairness constraints go awry, it’s helpful to think about a
+concrete problem. An estimated
+<a href="https://www.cdc.gov/diabetes/library/spotlights/diabetes-facts-stats.html">40 million Americans have diabetes</a>.
+Early detection and preventative treatment can have long-term health benefits.
+But screening for diabetes has costs, too: in addition to taking time off of
+work to go to the doctor, it requires a blood test, and the test itself is not
+free. Suffice to say that if we somehow <em>knew</em> that someone <em>would not</em> develop
+diabetes, we would not subject them to a screening.</p>
+
+<p>Now, imagine that you’ve been tasked with helping doctors figure out whom they
+should screen. To make that possible, you have historical data from a large
+representative survey which includes true, ground-truth labels for whether each
+person has diabetes, as well as a variety of other information like age, race,
+and BMI.<sup id="fnref:1" role="doc-noteref"><a href="#fn:1" class="footnote" rel="footnote">2</a></sup></p>
+
+<p>To help understand what to do, it’s useful to think about the screening problem
+from the patient’s perspective. Relative to the baseline of not screening them,
+two things can happen to a patient who <em>is</em> screened: either they <em>don’t</em> have
+diabetes, in which case we’ve imposed the costs of screening on them—let’s
+call them \(c_{\text{test}}\)—but they won’t see any benefit; or they <em>do</em>
+have it, in which case we’ve still imposed the costs of screening on them, but
+they’ll also be able to receive treatment with some benefits
+\(b_{\text{treat}}\).</p>
+
+<figure>
+<p><img src="/assets/posts/measure-mismeasure/decision-tree.svg" alt="Decision process for diabetes screening from patient's perspective" /></p>
+  <figcaption>Decision process for diabetes screening from patient’s perspective.</figcaption>
+</figure>
+
+<p>When we make the decision, we don’t know whether the patient has diabetes or
+not. But, based on the historical data, we might know something about their
+risk of diabetes, which we denote by \(r(x)\). A patient who thought they had
+a very <em>high</em> chance of developing diabetes would probably want to be screened
+since they would be likely to benefit from treatment; a patient who thought
+they had a very <em>low</em> chance of developing diabetes would probably prefer to
+avoid the hassle and discomfort of the test. Patients in the middle might be
+indifferent. The key quantity—how much a patient expects to benefit from
+screening <em>when we have to make our decision</em>—is therefore:<sup id="fnref:2" role="doc-noteref"><a href="#fn:2" class="footnote" rel="footnote">3</a></sup></p>
+
+<p>\[\text{benefit of screening}=r(x)\cdot b_{\text{treat}}-c_{\text{test}}.\]</p>
+
+<p>In particular, the patients who will, in expectation, benefit from screening
+are exactly those whose <em>risk</em> exceeds the cost-benefit ratio:</p>
+
+<p>\[r(x)&gt;\frac{c_{\text{test}}}{b_{\text{treat}}}.\]</p>
+
+<p>Thus, the natural thing to do is to try, as best as we are able, to estimate
+patients’ risk of developing diabetes, and screen exactly those people whose
+risk exceeds their cost-benefit ratio. The key point, though, is that <em>any
+other way</em> of deciding whom to screen requires harming some patients, either by
+screening people who don’t need to be screened or by failing to screen people
+who do.</p>
+
+<h2 id="inframarginality">Inframarginality</h2>
+
+<p>The principles discussed in the diabetes screening example above come into
+conflict with fairness constraints because of a phenomenon called
+“inframarginality.” To be even more concrete, let’s look at the <em>actual</em>
+distribution of diabetes risk in both White and Asian Americans.<sup id="fnref:3" role="doc-noteref"><a href="#fn:3" class="footnote" rel="footnote">4</a></sup></p>
+
+<figure>
+<p><img src="/assets/posts/measure-mismeasure/risk-distributions.svg" alt="Distribution of diabetes risk in White and Asian Americans" /></p>
+  <figcaption>Distribution of diabetes risk in White and Asian Americans. The solid black line shows a 1.5% decision threshold, and the dotted lines show the group-level average risks. At this threshold, more Asian (81%) than White (69%) Americans are screened.</figcaption>
+</figure>
+
+<p>These distributions are quite different: the baseline risk of having diabetes
+for Asian Americans is 11%, as compared to 9% for White Americans.
+Consequently, more Asian Americans than White Americans are screened under the
+current guidelines, which correspond to a 1.5% decision threshold.<sup id="fnref:4" role="doc-noteref"><a href="#fn:4" class="footnote" rel="footnote">5</a></sup> The
+false positive rates are also different: 79% for Asian Americans, and 67% for
+White Americans. The false negative rates and other metrics likewise differ.</p>
+
+<p>All of these error metrics differ across these two populations because they are
+<em>inframarginal</em>: measure not <em>only</em> the quality of the decision, but <em>also</em> the
+distribution of how difficult the outcome is to predict. They were developed to
+compared different models performance on the same dataset—in which case, only
+model performance varies. But when we use them to compare different groups,
+differences in these metrics could reflect either differences in decision
+quality <em>or</em> differences in the distribution of risk.</p>
+
+<p>As a result when distributions of risk differ—which, for straightforward
+statistical reasons, they almost always do—equalizing these metrics comes at
+the cost of making worse decisions. To equalize the false positive rates in our
+diabetes screening example, we would have to lower the decision threshold for
+White Americans—screening some people for whom the costs of screening exceed
+the benefits—and raise it for Asian Americans—failing to screen some people
+for whom the benefits of screening exceed the costs. To be clear, it is
+possible that in some cases the risk distributions and decision threshold will
+be such that we can equalize error metrics without harming anyone, but, as we
+show formally in the paper, these cases are so rare that they are
+statistically impossible.</p>
+
+<h2 id="externalities">Externalities</h2>
+
+<p>The diabetes screening example has one important simplification that really
+clarifies the problem of fairness constraints. There really aren’t any
+externalities: if I get screened, it has no impact on whether you get can get
+screened. In many real-world problems, this isn’t the case, because decisions
+come with externalities. For instance, a shortage of diabetes screening kits
+would change things so that if I get screened, you may not be able to.</p>
+
+<p>In cases with externalities, the tradeoffs are not only between costs and
+benefits for an individual person, but also, unavoidably, between different
+people. In these cases, problems of equity are often more acute. In college
+admissions, for instance, students who have the highest chance of graduating
+may be so in part because they attended strong high schools or have other
+advantages; prioritizing them in admissions necessarily requires deprioritizing
+other students who were less lucky. Even so, ensuring that many students are
+able to graduate from college is an important social good in its own right.</p>
+
+<p>In these cases, people can reasonably disagree about how, exactly, to balance
+between competing objectives. A useful tool for thinking about these tradeoffs
+is the <em>Pareto frontier.</em> The decisions lying on the Pareto frontier are those
+for which there is no “free lunch”: doing any better at achieving one goal
+comes at the cost of doing worse on another.</p>
+
+<figure>
+<p><img src="/assets/posts/measure-mismeasure/frontier.svg" alt="The Pareto frontier in a simulated admissions problem" /></p>
+  <figcaption>The Pareto frontier in a simulated admissions problem where, because of structural barriers, students from the target group are on average less likely to graduate. The red point shows the policy that results in the greatest possible number of students graduating, while the blue point (\(\lambda = \tfrac 1 4\)) shows a policy resulting from trading off between degree attainment and admitting a diverse class. The Pareto frontier itself comes from sweeping over all possible values of \(\lambda\). The purple point illustrates the cost of implementing counterfactual fairness.</figcaption>
+</figure>
+
+<p>The figure shows a simulation of the admissions scenario described above. The
+purple frontier shows those admissions policies for which the number of
+students who attain a bachelor’s degree cannot be increased without decreasing
+the enrollment of students from a target group. Choosing which point to occupy
+on the Pareto frontier to occupy is hard; choosing to be <em>on</em> the Pareto
+frontier is easy. Any policy that is not on the Pareto frontier can be
+straightforwardly improved to one that is without making any tradeoffs.<sup id="fnref:5" role="doc-noteref"><a href="#fn:5" class="footnote" rel="footnote">6</a></sup>
+And—although the mathematics involved is more complicated<sup id="fnref:6" role="doc-noteref"><a href="#fn:6" class="footnote" rel="footnote">7</a></sup>—as in the
+simpler diabetes example, enforcing most fairness constraints comes at a cost.
+In the case of
+<a href="https://en.wikipedia.org/wiki/Fairness_(machine_learning)#Causality-based_metrics">counterfactual fairness</a>,
+the cost is substantial because, as we prove in the paper, counterfactual
+fairness, in realistic settings, turns out to be equivalent to running a fully
+randomized lottery.<sup id="fnref:7" role="doc-noteref"><a href="#fn:7" class="footnote" rel="footnote">8</a></sup> While the cost may vary from case to case, even in
+these more complicated settings, fairness constraints require some sacrifice on
+the part of the groups they are designed to protect.</p>
+
+<h3 id="constraints-dont-help-you-make-tradeoffs-when-there-are-externalities">Constraints don’t help you make tradeoffs when there are externalities</h3>
+
+<p>Some fairness constraints, like equalized false positive rates or demographic
+parity, are sufficiently simple that in decision making scenarios with
+externalities, they are compatible with the Pareto frontier—but only a single
+point of it. Sometimes, this is taken to be a feature: the constraint solves
+the hard problem of picking a what trade-off to make. But there’s no reason why
+the trade-off they make is sensible or in any way related to our values.</p>
+
+<figure>
+<p><img src="/assets/posts/measure-mismeasure/cmc.svg" alt="The Pareto frontier for admission to a high-risk care management program in Obermeyer et al. (2019) for the population as a whole, and among women aged 25 to 34" /></p>
+  <figcaption>The Pareto frontier for admission to a high-risk care management program in Obermeyer et al. (2019). Left: The Pareto frontier for all patients. Because Black patients incur high medical costs in the population as a whole, equalizing false negative rates (FNR)—as well as false positive rates (FPR), or demographic parity (DP)—results in fewer Black patients being admitted than under a policy that simply maximizes the admission of high-cost patients. Right: The Pareto frontier for the subpopulation of women aged 25 to 34. Black patients in this subpopulation incur lower medical costs, and so all three constraints increase the number of admissions of Black patients.</figcaption>
+</figure>
+
+<p>The plot above shows data from
+<a href="https://www.science.org/doi/10.1126/science.aax2342">Obermeyer et al. (2019)</a>,
+who study admissions to a high-risk care management program used by hospitals
+to ensure that patients with complex medical needs receive adequate care. Black
+patients in this data incur higher higher medical costs than White patients, a
+gap likely caused by worse access to care due to a variety of socioeconomic
+factors and discrimination. This means that equalizing false negative rates,
+false positive rates, or achieving demographic parity all result in fewer Black
+patients being admitted to the program than a policy that simply maximizes the
+admission of high-cost patients. Medical costs are, as the authors argue, a
+poor proxy of medical need. Black patients at the same level of cost tend to be
+sicker than White patients, again likely because of worse access to care. Thus,
+in this case, equalizing error rates actually <em>worsens</em>, rather than improves,
+equity.<sup id="fnref:8" role="doc-noteref"><a href="#fn:8" class="footnote" rel="footnote">9</a></sup></p>
+
+<p>Sometimes fairness constraints pull our decisions in the “right direction,” as
+they do in the subpopulation of women aged 25 to 34 shown in the right-hand
+plot. But because of inframarginality, error rates that are equalized in one
+population are essentially guaranteed not to be equalized in another
+population, or in a subpopulation. Letting error rates guide how we choose a
+point on the Pareto frontier would entail strange consequences, for instance
+that the relative values of equity and medical care are necessarily different
+for women between 25 and 34 than they are for the population as a whole, or for
+patients living in Milwaukee than they are for patients living in Boston—and,
+moreover, differ in ways that are hard to predict in advance.</p>
+
+<p>Perhaps most importantly, if we only enforce fairness constraints only when they
+are broadly in agreement with other policy objectives, like increasing access
+to care among Black patients, then we don’t really think the constraints
+capture what it means for something to be “fair.” Instead, we should just
+target the policy objectives that we care about directly, rather than
+needlessly paying the cost the fairness constraints impose.</p>
+
+<h2 id="tradeoffs-are-sometimes-worth-it">Tradeoffs are sometimes worth it</h2>
+
+<p>I don’t want to overstate our case. Fairness constraints do always come at a
+cost to the people they’re intended to protect, and this cost is often
+substantial and hard to justify except in terms of other policy objectives we
+could have pursued directly. But sometimes constraints can have costs that
+<em>are</em>—or at least could be—worth it. Model blinding offers a good example.
+<a href="https://arxiv.org/pdf/2306.10220.pdf">Coots et al. (2023)</a> study race-blind
+risk models in diabetes screening. While blind models are miscalibrated and
+perform worse, in practice, the impact of this miscalibration is small, because
+the screening decisions for most people don’t change. Moreover, the people for
+whom the screening decision does change almost all have risks very close to the
+decision threshold, meaning that they are close to indifferent to whether they
+are screened or not.</p>
+
+<p>Even if the direct harm to patients is small, it would still be illegitimate to
+inflict it pointlessly. But, as the authors argue:</p>
+<blockquote>
+    Including race and ethnicity as inputs to predictive models may, for
+    instance, inadvertently reinforce pernicious attitudes of biological
+    determinism or lead to greater stigmatization of individuals who are
+    already marginalized. In part for these reasons, several hospitals have
+    recently moved away from reporting race-adjusted glomerular filtration rate
+    estimates, instead reporting a race-unaware value, both to avoid race-based
+    predictions and to mitigate concerns that a race-aware model may
+    deprioritize Black patients for kidney transplantation.
+</blockquote>
+<p>Weighing these costs against decreased model predictivity is challenging, but
+it is at least plausible that race-aware models generate negative externalities
+that outweigh their costs. For most other fairness constraints, however, this
+point is much less clear. It is not clear what negative externalities are
+generated by unequal false positive rates, for example—quantities that are
+difficult to observe and interpret, and which, as explored above, do not
+correspond to group welfare. Certainly, robust arguments justifying the costs
+fairness constraints impose on the groups they are intended to protect are
+seriously lacking in the algorithmic fairness literature as it exists today.</p>
+
+<h2 id="a-more-democratic-approach">A more democratic approach</h2>
+
+<p>While this post focuses largely on unpacking our criticism of constraint-based
+notions of fairness, we also try to offer a positive vision for how to approach
+questions of equity in algorithm and policy design. In particular, we encourage
+practitioners to look beyond model predictions and error rates, and to think
+more carefully about how their models fit into the broader policy context. We
+encourage practitioners to focus on issues like collecting representative
+data, which are often needed for models to perform well across groups <em>because</em>
+of the distributional differences that cause inframarginality. We advise
+carefully choosing targets of prediction and thinking through the causal
+structure of the policy problem to ensure that the model is well-suited to
+achieving one’s actual policy goals. Most of all, we encourage policymakers and
+algorithm designers to grapple <em>directly</em> with the hard tradeoffs that raise
+algorithmic fairness issues in the first place.</p>
+
+<p>To be clear, weighing the costs and benefits of different policies is <em>very</em>
+hard. Many approaches in algorithmic fairness seem motivated, at least in part,
+by a desire to short-circuit difficult discussions about these issues. But we
+hope that our work illustrates why we should resist this impulse. Fairness
+constraints don’t use information about people’s preferences. But, in a
+democratic society, it <em>shouldn’t</em> be possible to technocratically sidestep
+public debates of real tradeoffs, tradeoffs about which reasonable people can
+disagree. Our hope is that this work encourages a new approach to questions of
+equity in algorithm and policy design. To avoid the costs associated with
+fairness constraints, we should instead embraces the profoundly challenging but
+ultimately <em>non-technical</em> problem of aggregating different people’s
+preferences for how society navigates tough choices.</p>
+<div class="footnotes" role="doc-endnotes">
+  <ol>
+    <li id="fn:0" role="doc-endnote">
+      <p>This is related to a different mantra we’ve tried to express elsewhere.
+The law distinguishes between
+<a href="https://en.wikipedia.org/wiki/Disparate_treatment">disparate treatment</a>
+and
+<a href="https://en.wikipedia.org/wiki/Disparate_impact">disparate impact</a>. Most
+discrimination literature primarily focuses on disparate treatment—“the
+effect of <em>race</em> on <em>decisions</em>”—but more attention is needed on
+disparate impact—“the effect of <em>decisions</em> on <em>racial disparities</em>.” <a href="#fnref:0" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:1" role="doc-endnote">
+      <p>These aren’t necessarily the most predictive covariates; they just happen to be the
+covariates actually used by the
+<a href="https://www.uspreventiveservicestaskforce.org/uspstf/recommendation/screening-for-prediabetes-and-type-2-diabetes">US Preventive Services Task Force</a>
+for its screening recommendations. <a href="#fnref:1" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:2" role="doc-endnote">
+      <p>This is a simplification, of course. In reality, the patient’s preferences
+might depend on the costs of treatment, the severity of the disease, and
+other factors, all of which are readily incorporated into this framework.
+There might also be negative externalities, which do change things and
+which we discuss below. <a href="#fnref:2" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:3" role="doc-endnote">
+      <p>The data come from the
+<a href="https://www.cdc.gov/nchs/nhanes/index.htm">National Health and Nutrition Examination Survey</a>.
+Risks are estimated using logistic regression and the features listed
+above, as in <a href="https://doi.org/10.7326/m20-8079">Aggarwal et al. (2022)</a> <a href="#fnref:3" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:4" role="doc-endnote">
+      <p>The USPSTF’s guidelines are not expressed in terms of a risk threshold,
+but are equivalent to this threshold for White Americans; see
+<a href="https://doi.org/10.7326/m20-8079">Aggarwal et al. (2022)</a>. In
+practice, it’s unclear to what extent this threshold really balances the
+costs and benefits of screening, but it’s a useful benchmark. Nothing about
+the example would change if we used a different threshold, or even if we
+allowed individual patients to choose their own thresholds. <a href="#fnref:4" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:5" role="doc-endnote">
+      <p>To be clear, in real life, admissions involves more than these two
+objectives. Incorporating other objectives doesn’t change the basic
+argument, though—it just makes the Pareto frontier higher-dimensional. <a href="#fnref:5" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:6" role="doc-endnote">
+      <p>See my earlier blog post on <a href="/2022/07/18/prevalence.html">prevalence</a>. <a href="#fnref:6" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:7" role="doc-endnote">
+      <p>This result depends on counterfactuals being non-deterministic, in the
+sense that individuals who are observationally equivalent to the
+decision maker nevertheless may have different counterfactual outcomes. To
+the extent that such counterfactuals even make sense (see, e.g.,
+<a href="https://arxiv.org/pdf/2006.12460.pdf">Gaebler et al. (2022)</a> for some
+discussion of this), the extremely complex causal structure of the world
+means that two individuals who, for instance, have the same race and SAT
+score might nevertheless have very different SAT scores for any number of
+reasons in worlds in which their races were somehow altered. For the formal
+statement, see Theorem 11 in the paper. <a href="#fnref:7" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:8" role="doc-endnote">
+      <p>Looking at cost, rather than medical needs, is a fairness mistake in its
+own right, but of a very different kind than can be captured by fairness
+constraints. I discuss label bias and related issues below. <a href="#fnref:8" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+  </ol>
+</div>]]></content><author><name>Johann D. Gaebler</name></author><summary type="html"><![CDATA[It’s become something of a cliche that algorithms are everywhere. An enormous number papers—including many of my own!—begin with some variation on the following: Algorithmic decision-making systems are increasingly used to make decisions that affect people's lives in health care, criminal justice, lending, college admissions, hiring, and more. That means that, like the human decision-makers they've replaced, biases in these systems can harm racial and gender minorities or other marginalized groups. The cliche remains relevant because the problem is real: algorithms do make increasingly important decisions, sometimes to disastrous effect. The question, though, is, what should we do about it?]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://www.jgaeb.com/assets/images/causal-fairness-cover.png" /><media:content medium="image" url="https://www.jgaeb.com/assets/images/causal-fairness-cover.png" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Forgotten but not Gone</title><link href="https://www.jgaeb.com/2023/09/13/debt.html" rel="alternate" type="text/html" title="Forgotten but not Gone" /><published>2023-09-13T00:00:00+00:00</published><updated>2023-09-13T00:00:00+00:00</updated><id>https://www.jgaeb.com/2023/09/13/debt</id><content type="html" xml:base="https://www.jgaeb.com/2023/09/13/debt.html"><![CDATA[<p><a href="https://en.wikipedia.org/wiki/Debtors%27_prison">Debtors’ prisons</a> were once a
+central feature of the American legal system—so much so that even sitting
+supreme court justices could find themselves locked up for bad debts.<sup id="fnref:1" role="doc-noteref"><a href="#fn:1" class="footnote" rel="footnote">1</a></sup>
+Widely reviled—John Stuart Mill called them “barbarous expedients of a rude
+age, repugnant to justice as well as humanity”<sup id="fnref:2" role="doc-noteref"><a href="#fn:2" class="footnote" rel="footnote">2</a></sup>—debtors’ prisons were
+outlawed in nearly every American state by the mid-1800s.<sup id="fnref:3" role="doc-noteref"><a href="#fn:3" class="footnote" rel="footnote">3</a></sup> Nevertheless,
+over the last decade, reports have emerged of people going to jail for unpaid
+debts in
+<a href="https://www.nytimes.com/2015/02/09/us/ferguson-one-of-2-missouri-suburbs-sued-over-gantlet-of-traffic-fines-and-jail.html">Ferguson, Missouri</a>;
+<a href="https://www.nytimes.com/2019/01/08/magazine/cities-fine-poor-jail.html">Corinth, Mississippi</a>;
+<a href="https://www.themarshallproject.org/2020/01/09/think-debtors-prisons-are-a-thing-of-the-past-not-in-mississippi">Jackson, Mississippi</a>;
+and other cities and states.</p>
+
+<p>What these debtors had failed to pay, however, was not commercial loans but
+rather court debts: fines, fees, restitution, and other “legal financial
+obligations.” Frequently, these debts were incurred for minor offenses in
+cases before municipal courts, the low-level courts that handle—often with
+very limited oversight—the traffic and other petty offenses making up the
+bulk of the judiciary’s caseload. Because these court debtors were scattered
+across the justice system and rarely subject to systematic tracking, little was
+known about them. There were no national—or even state-level<sup id="fnref:4" role="doc-noteref"><a href="#fn:4" class="footnote" rel="footnote">4</a></sup>—statistics
+describing who these court debtors were, how much debt they owed, or how long
+they spent in jail.</p>
+
+<p>In the absence of a clear picture of debt imprisonment, we set out in 2018 on a
+first-of-its-kind data integration effort to answer the most basic question of
+all:
+<a href="https://doi.org/10.1371/journal.pone.0290397">how many people are being jailed for unpaid court debts</a>?</p>
+
+<h2 id="finding-the-data">Finding the Data</h2>
+
+<p>The data needed to understand debt imprisonment were spread across the justice
+system. To get them, we filed hundreds of public records requests with county
+jails across the country seeking booking records that would allow us to
+identify individuals who had been jailed for unpaid court debts. This was a
+difficult task. Many jails did not have the data we needed. Others had the
+data, but found it difficult to extract from their records management systems,
+in some cases requesting hundreds or thousands of dollars—in one instance,
+$110,211.90—to do so. Most jails simply never responded to our repeated
+requests.</p>
+
+<p>Ultimately, we collected data from 100 counties in five states—most in Texas
+and Wisconsin—as well as state-wide data in two additional states, totalling
+more than 4 million individual jail booking records. The data came in a huge
+variety of formats: plain text files, CSVs, Excel spreadsheets, Word documents,
+databases, and even PDFs <em>of</em> plain text files. To cope with this variety, we
+made use of a variety of tools like <a href="https://tabula.technology/">Tabula</a> and
+<a href="https://www.xpdfreader.com/pdftotext-man.html">pdftotext</a>, as well as
+developing our own tools to extract data from specific jail log formats, like
+<a href="https://ims.tylerhost.net/Products/ProductInfo/JailManager.aspx">Odyssey</a> and
+<a href="https://www.netdatacorp.net/law-enforcement/">NET Data</a>. Once the data had
+been extracted into a format that could easily be manipulated in <code class="language-plaintext highlighter-rouge">R</code>, we
+developed a
+<a href="https://github.com/stanford-policylab/debt">data cleaning pipeline</a> to:</p>
+
+<ul>
+  <li>Classify the raw data,</li>
+  <li>Parse the classified data into a standard format,</li>
+  <li>Deduplicate rows corresponding to the same individual and separate distinct
+charges corresponding to the same jail stay,</li>
+  <li>Standardize the data to remove clerical errors and misparsed data entries, and</li>
+  <li>Impute missing data such as age and ethnicity where possible.</li>
+</ul>
+
+<p>All of the data we collected and cleaned is
+<a href="https://policylab.stanford.edu/debtors-prisons/">freely available online</a>.</p>
+
+<figure>
+<p><img src="/assets/posts/debt/redacted_example.png" alt="An example jail booking log. The &quot;CPF&quot; in the charge refers to a _capias pro fine_ warrant, issued for failure to pay a court debt." /></p>
+  <figcaption>An example jail booking log. The ‘CPF’ in the charge refers
+to a <em>capias pro fine</em> warrant, issued for failure to pay a court debt.</figcaption>
+</figure>
+
+<h3 id="defining-failure-to-pay">Defining “Failure to Pay”</h3>
+
+<p>The key challenge in this process was identifying which jail stays actually
+corresponded to court debtors. Jail bookings usually involve multiple charges.
+If one of those charges is for a serious jailable offense, even if the
+individual in question was also jailed for unpaid court debts, they would
+likely have been jailed anyway. To identify court debtors, we looked for
+individuals who were jailed for court-debt–related charges <em>only</em>. However,
+court-debt–related charges are often recorded in unclear ways or not recorded
+at all, and we had to learn the jargon that would identify them jurisdiction
+by jurisdiction. To ensure that our counts were appropriately conservative, we
+tried to code charges that were clearly failure-to-pay (FTP) related—for
+instance, charges actually mentioning “failure to pay” or “FTP,” charges where
+the individual had “laid out” some portion of their fines, charges
+corresponding to a <em>capias pro fine</em> (CPF) warrant in Texas, or charges coming
+from a municipal court in Wisconsin.<sup id="fnref:5" role="doc-noteref"><a href="#fn:5" class="footnote" rel="footnote">5</a></sup> Then, we counted the people who had
+been jailed <em>only</em> on charges related to failure to pay.</p>
+
+<h2 id="counting-court-debtors">Counting Court Debtors</h2>
+
+<p>Using this data, we were able to estimate the number of people jailed for
+failure to pay in Texas and Wisconsin, between roughly 2005 and 2018. The
+month-by-month booking rates are shown below.</p>
+
+<figure>
+<p><img src="/assets/posts/debt/all_ftp_per_cap.svg" alt="Annualized monthly booking rates for failure to pay alone in Texas and Wisconsin, 2005--2018." /></p>
+  <figcaption>Top: Annualized monthly booking rates for failure to pay
+alone in Texas and Wisconsin, 2005–2018. Bottom: the proportion of the state
+population the counties used in the calculation comprise.</figcaption>
+</figure>
+
+<p>In both states, based on the counties that gave us data, the annualized rate is
+around 1,500 bookings per million residents. The dashed red reference line
+shows the <em>per capita</em> arrest rates in those states for burglary, which is
+substantially lower. Assuming these rates are representative of the states as a
+whole, that comes to roughly 38,000 jailings for unpaid court debt in Texas
+each year, and another 4,000 in Wisconsin. These estimates involve considerable
+uncertainty, since this assumption is unlikely to be true—the counties that
+gave us data are not random and differ from the states as wholes in observable
+ways—but seem unlikely to be off by an order of magnitude.<sup id="fnref:6" role="doc-noteref"><a href="#fn:6" class="footnote" rel="footnote">6</a></sup></p>
+
+<p>Most of these jailings were short. In both Texas and Wisconsin, the median jail
+stay was a day. The average stay was longer—around two days in Texas and
+around six days in Wisconsin—reflecting the fact that a small number of
+individuals were jailed for much longer periods of time.</p>
+
+<figure>
+<p><img src="/assets/posts/debt/length_of_stay.svg" alt="Distribution of jail stays for failure to pay alone in Texas and Wisconsin, 2005--2018." /></p>
+  <figcaption>Distribution of jail stays for failure to pay alone in
+Texas and Wisconsin, 2005–2018. (The \(y\)-axis is on the log scale.)</figcaption>
+</figure>
+
+<p>Most of the jailings also stemmed from relatively petty offenses. In Texas and
+Wisconsin, the majority of jailings were for traffic offenses (64%), and large
+numbers of jailings were for other minor offenses like public intoxication
+(7%), possession of marijuana and other petty drug offenses (5%), minor theft
+(4%), disorderly conduct (1.7%), and truancy (1.7%). While very few counties
+provided any information on the amount of court debt owed, warrant data from
+the state of Oklahoma—in which traffic offenses similarly account for a large
+portion of failure to pay cases—suggests that court debtors risk jail for
+even comparatively small amounts of debt. In Oklahoma, the median court costs
+in traffic cases where a failure to pay warrant was issued was around $500.</p>
+
+<figure>
+<p><img src="/assets/posts/debt/court_costs.svg" alt="Distribution of court costs in traffic cases where a failure to pay warrant was issued in Oklahoma." /></p>
+  <figcaption>Distribution of court costs in traffic cases where a
+failure to pay warrant was issued in Oklahoma.</figcaption>
+</figure>
+
+<h2 id="a-better-system">A Better System</h2>
+
+<p>These findings paint a troubling picture of a system in which tens of thousands
+of people are jailed each year for unpaid court debts, often stemming from
+minor offenses. The financial and social costs of this practice are
+substantial, extending far beyond jail itself. Many of the individuals we spoke
+to found themselves scrambling to make arrangements for their jobs and children
+after being arrested for unpaid court debts years after the original offense.
+The cost is not only heavy for them: the public at large expends considerable
+resources to incarcerate these individuals for unpaid debts that will not be
+recouped. Policymakers must consider alternative approaches for handling unpaid
+court debt, from public service and other alternative sentencing programs, to
+reducing fines associated with petty offenses, to implementing more equitable
+income-based fines. Efforts to limit the practice of jailing court debtors in
+states like
+<a href="https://harvardlawreview.org/print/vol-128/h-b-14-1061-69th-gen-assemb-2d-reg-sess-colo-2014/">Colorado</a>
+and
+<a href="https://www.texastribune.org/2017/05/28/bill-end-jail-time-those-too-poor-pay-fines-heads-texas-governor/">Texas</a>
+show that reform is possible. Without central data collection, much remains
+unclear about debt imprisonment. We nevertheless hope that this
+<a href="https://policylab.stanford.edu/debtors-prisons/">data integration effort</a>—which
+would never have been possible without the dedicated effort of the many people
+who worked on this project with me—will serve as a resource for journalists,
+advocates, and policymakers are working to reduce the social and financial
+costs of debt imprisonment.</p>
+
+<p>(Many thanks to my co-authors, Phoebe Barghouty, Sarah Vicol, Cheryl Phillips,
+and Sharad Goel; as well as Joshua Grossman, James Hamilton, Jane Lee, Emily
+Lemmerman, Joe Nudell, and Keniel Yao for their contributions to the thankless
+tasks of investigation, data collection, and data cleaning.)</p>
+<div class="footnotes" role="doc-endnotes">
+  <ol>
+    <li id="fn:1" role="doc-endnote">
+      <p>James Wilson (1742–1798) was a signer of the Declaration of
+Independence, a delegate to the Constitutional Convention, and an associate
+justice of the Supreme Court. He was also a land speculator who was
+twice imprisoned for unpaid debts in 1797. See: Ewald, William. “James
+Wilson and the Drafting of the Constitution.” <em>U. Pa. J. Const. L.</em> 10
+(2007): 901. <a href="#fnref:1" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:2" role="doc-endnote">
+      <p>Mill, John. <em>Principles of Political Economy (Ashley ed.)</em>. Longmans,
+Green, and Company, 1848. Chapter 9, Section 8. <a href="#fnref:2" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:3" role="doc-endnote">
+      <p>Coleman, Peter J. <em>Debtors and creditors in America: insolvency,
+imprisonment for debt, and bankruptcy, 1607-1900</em>. Beard Books, 1999. <a href="#fnref:3" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:4" role="doc-endnote">
+      <p>Except in Rhode Island; see Rhode Island Family Life Center.
+“<a href="https://opendoorsri.org/court-debt-reform">Court Debt and Related Incarceration in Rhode Island from 2005 through 2007</a>.”
+ (2008). <a href="#fnref:4" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:5" role="doc-endnote">
+      <p>For full details of how we coded failure to pay, see the
+<a href="https://doi.org/10.1371/journal.pone.0290397">paper</a>. <a href="#fnref:5" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:6" role="doc-endnote">
+      <p>Similar considerations apply to the other estimates in this post. Full
+details for all the estimates are given in the
+<a href="https://doi.org/10.1371/journal.pone.0290397">paper</a> and the
+<a href="https://github.com/stanford-policylab/debt">reproduction materials</a>. <a href="#fnref:6" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+  </ol>
+</div>]]></content><author><name>Johann D. Gaebler</name></author><summary type="html"><![CDATA[Debtors’ prisons were once a central feature of the American legal system—so much so that even sitting supreme court justices could find themselves locked up for bad debts.1 Widely reviled—John Stuart Mill called them “barbarous expedients of a rude age, repugnant to justice as well as humanity”2—debtors’ prisons were outlawed in nearly every American state by the mid-1800s.3 Nevertheless, over the last decade, reports have emerged of people going to jail for unpaid debts in Ferguson, Missouri; Corinth, Mississippi; Jackson, Mississippi; and other cities and states. James Wilson (1742–1798) was a signer of the Declaration of &#8617; Mill, John. Principles of Political Economy (Ashley ed.). Longmans, &#8617; Coleman, Peter J. _Debtors and creditors in America: insolvency, &#8617;]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://www.jgaeb.com/assets/images/debt-cover.png" /><media:content medium="image" url="https://www.jgaeb.com/assets/images/debt-cover.png" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Police stop Black drivers more often than Whites. We found out why. (Washington Post)</title><link href="https://www.jgaeb.com/2022/09/15/telematics.html" rel="alternate" type="text/html" title="Police stop Black drivers more often than Whites. We found out why. (Washington Post)" /><published>2022-09-15T00:00:00+00:00</published><updated>2022-09-15T00:00:00+00:00</updated><id>https://www.jgaeb.com/2022/09/15/telematics</id><content type="html" xml:base="https://www.jgaeb.com/2022/09/15/telematics.html"><![CDATA[]]></content><author><name>Johann D. Gaebler</name></author><summary type="html"><![CDATA[U.S. police officers pull over tens of thousands of drivers every day, making traffic stops the most common way people interact with law enforcement. They’re also a frequent source of tension: Black drivers are stopped and searched at higher rates than White drivers, and Black drivers are more likely than White drivers to say they were stopped for illegitimate reasons. Traffic stops can result in fines or the loss of a driver’s license even in the best cases, and can escalate to violence in the worst.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://www.washingtonpost.com/wp-apps/imrs.php?src=https://arc-anglerfish-washpost-prod-washpost.s3.amazonaws.com/public/2YKAGZAHSQI63AFWIPZL7TDGMI.jpg&amp;w=916" /><media:content medium="image" url="https://www.washingtonpost.com/wp-apps/imrs.php?src=https://arc-anglerfish-washpost-prod-washpost.s3.amazonaws.com/public/2YKAGZAHSQI63AFWIPZL7TDGMI.jpg&amp;w=916" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Blocks as Geographic Discontinuities</title><link href="https://www.jgaeb.com/2022/08/15/polling-places.html" rel="alternate" type="text/html" title="Blocks as Geographic Discontinuities" /><published>2022-08-15T00:00:00+00:00</published><updated>2022-08-15T00:00:00+00:00</updated><id>https://www.jgaeb.com/2022/08/15/polling-places</id><content type="html" xml:base="https://www.jgaeb.com/2022/08/15/polling-places.html"><![CDATA[<p>Americans have fiercely debated
+<a href="https://www.nytimes.com/2022/01/25/us/lincoln-georgia-voting-rights.html">closing</a>
+and
+<a href="https://www.theguardian.com/us-news/2018/oct/28/dodge-city-polling-place-voter-suppression-voting-rights">moving</a>
+<a href="https://www.washingtonpost.com/business/2018/10/26/thousands-polling-places-were-closed-over-past-decade-heres-where/">polling places</a>
+in recent years. Civil rights groups like the Leadership Conference Education
+Fund have opposed high-profile polling location closures and relocations,
+charging that the changes represent a “particularly pernicious way to
+disenfranchise voters of color.”<sup id="fnref:1" role="doc-noteref"><a href="#fn:1" class="footnote" rel="footnote">1</a></sup> Many election administrators and other
+public officials have defended the changes as necessary concessions to
+efficiency,<sup id="fnref:2" role="doc-noteref"><a href="#fn:2" class="footnote" rel="footnote">2</a></sup> to ensure compliance with regulations like the ADA,<sup id="fnref:3" role="doc-noteref"><a href="#fn:3" class="footnote" rel="footnote">3</a></sup> or as a
+natural response to declining numbers of in-person voters.<sup id="fnref:4" role="doc-noteref"><a href="#fn:4" class="footnote" rel="footnote">4</a></sup></p>
+
+<p>However, a central question in the debate has remained difficult to answer: how
+much <em>does</em> changing voters’ polling places affect turnout?</p>
+
+<p>To find out, <a href="https://doi.org/10.1017/pan.2022.19">we looked at hundreds of thousands of voters across ten states</a>
+examining how changes in their assigned polling places affected <em>whether</em> they
+voted and <em>how</em> they voted—in person, early, or by mail.</p>
+
+<p>Political scientists have argued—with varying levels of convincingness—that
+everything from the weather<sup id="fnref:5" role="doc-noteref"><a href="#fn:5" class="footnote" rel="footnote">5</a></sup> to shark attacks<sup id="fnref:6" role="doc-noteref"><a href="#fn:6" class="footnote" rel="footnote">6</a></sup> affects voter behavior.
+Sieving out the effects of polling place reassignment, specifically, takes some
+care.</p>
+
+<p>To do so, we identified a natural experiment on streets where precinct
+boundaries run down the middle of the block, as shown below.</p>
+
+<figure>
+<p><img src="/assets/posts/polling-places/design.png" alt="An illustration of our block randomization design in Milwaukee, WI." /></p>
+  <figcaption>An illustration of our block randomization design in
+    Milwaukee, Wisconsin. Voters on both sides of the street were assigned to
+    the same polling place in 2012 (green, bottom panel). In 2016, voters on
+    the east side of the block were reassigned to a new polling place 0.07
+    miles farther away (orange, top panel).</figcaption>
+</figure>
+
+<p>People rarely factor in—or even known—their new home’s assigned polling
+place when deciding where to live. So, in terms of polling place assignments,
+given that someone lives on a particular block, which side of the street they
+live on is “as good as random.”<sup id="fnref:7" role="doc-noteref"><a href="#fn:7" class="footnote" rel="footnote">7</a></sup> In particular, on the blocks split by
+precinct boundaries—that is, across “geographic
+discontinuities”—differences in polling place assignment could change voter
+behavior. However, the effects of age, race, gender, wealth, weather, and shark
+attacks should, on average, wash out.</p>
+
+<p>By comparing voting rates on the side of the block closer to its polling place to
+turnout on the side farther away,<sup id="fnref:8" role="doc-noteref"><a href="#fn:8" class="footnote" rel="footnote">8</a></sup> we measured to what extent moving a polling
+place farther away reduced turnout. What we found, as shown in the figure below,
+is that assigning voters a more distant polling place reduced their probability
+of voting in-person on election day by about 1.5% \((\pm 0.4\%)\).</p>
+
+<figure>
+<p><img src="/assets/posts/polling-places/distance.png" alt="The effect of increasing distance to polling place on voting" /></p>
+  <figcaption>The effect of increasing distance to polling place on
+    voting. Increased distance does not reduce probability of voting, on
+    average, but does affect the method of voting.</figcaption>
+</figure>
+
+<p>However, in states where alternatives such as early voting or mail-in voting
+exist, assigning voters to a farther polling place <em>increased</em> their
+probability of voting using one of these substitutes by about 1.6% \((\pm
+0.6\%)\). As a result, when substitutes were available, reduced in-person and
+increased alternative voting cancelled out to well within the uncertainty of
+our estimate \((0.1\% \pm 0.4\%)\).</p>
+
+<p>In addition to distance, polling place reassignment itself may be a reason not
+to vote. It could be a source of annoyance or confusion, or it might require
+voters to spend additional time and effort to find out where their new polling
+location is and how to get there.</p>
+
+<p>How much does the “shock” of polling place reassignment change voter turnout?
+By looking at blocks where one side of the block experienced a polling place
+change between the 2012 and 2016 elections while the other did not, we estimate
+that the “shock” of reassigning polling places reduced in-person voting by 1.3%
+(\(\pm 1.0\%\)) and increased voting with substitutes by 0.8% (\(\pm
+0.7\%\)). Significantly, the voters living on these blocks were roughly as
+likely to live in counties where the shock involved adding polling places as
+where the shock involved reducing polling places.</p>
+
+<figure>
+<p><img src="/assets/posts/polling-places/shock.png" alt="The effect of shock on voting." /></p>
+  <figcaption>The effect of shock on voting. While in-person election day
+    voting is reduced, more than half of the reduction is substituted to other
+    methods of voting.</figcaption>
+</figure>
+
+<p>In summary, in the absence of substitutes, we estimate that polling place
+change reduces in-person voting by around 1%.<sup id="fnref:9" role="doc-noteref"><a href="#fn:9" class="footnote" rel="footnote">9</a></sup> To be sure, a 1% effect on
+voter turnout will mostly likely result in less than a 1% change in the margin
+of victory in an election. Most voters’ polling places are not reassigned in a
+given election cycle. Moreover, partisan segregation is not total, and so
+increasing the distance one party’s voters have to travel to their polling
+place generally increases the distance for at least some voters of the other
+party as well.</p>
+
+<p>But importantly our estimated <em>net</em> effect of distance on turnout when voters
+can substitute into other voting methods, such as early voting or vote-by-mail,
+is around 0.1%. While not every state affords voters easy access to
+substitutes, 0.1% is less than the margin of victory in every state in every
+presidential election since 2000.</p>
+
+<p>We caution that these results are limited to the population of registered
+voters—and, in particular, to the registered voters who happen to live on
+the geographic discontinuities, who could conceivably differ from the general
+population in subtle ways. But our work suggests that voters may be able to
+make up for the challenges of traveling farther to vote and polling place
+assignment more generally by instead voting early or by mail when these options
+are available.</p>
+
+<p>(Many thanks to my collaborators: Sabina Tomkins, who led this project; Keniel
+Yao; Tobias Konitzer; David Rothschild; Marc Meredith; and Sharad Goel.)</p>
+<div class="footnotes" role="doc-endnotes">
+  <ol>
+    <li id="fn:1" role="doc-endnote">
+      <p><a href="http://civilrightsdocs.info/pdf/reports/Democracy-Diverted.pdf"><em>Democracy Diverted: Polling Place Closures and the Right to Vote</em></a>,
+p. 8. <a href="#fnref:1" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:2" role="doc-endnote">
+      <p><a href="https://www.nytimes.com/2022/01/25/us/lincoln-georgia-voting-rights.html"><em>In a Georgia County, Deep Distrust Over a Plan to Close Polling Places</em></a>:
+“In Lincoln County, Ms. Bolton, the county elections director, argues that
+the change would make it easier for her to manage Election Day. Her tiny
+staff is stressed, she said, by the responsibility of setting up and
+breaking down the complicated electronic voting machines in seven locations
+spread around the county’s 257 square miles.” <a href="#fnref:2" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:3" role="doc-endnote">
+      <p><a href="https://www.theguardian.com/us-news/2018/oct/28/dodge-city-polling-place-voter-suppression-voting-rights"><em>Dodge City polling place debacle: voter suppression or incompetence?</em></a>:
+“Long before Cox was elected, Dodge City consolidated voting into a single
+polling station at the civic center in the mid-1990s after a new federal
+law on access for people with disabilities meant that many existing places
+people went to vote could no longer be used. What was intended as a
+temporary measure became the norm.” <a href="#fnref:3" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:4" role="doc-endnote">
+      <p><a href="https://www.eac.gov/documents/2017/11/15/eavs-deep-dive-poll-workers-and-polling-places"><em>EAVS Deep Dive: Poll Workers and Polling Places</em></a>:
+“There has been a continued decrease in physical polling places, which can
+likely be explained by the expansion of alternative voting options, the
+increased use of these options by voters, and the corresponding decrease in
+in-person voters on Election Day.” <a href="#fnref:4" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:5" role="doc-endnote">
+      <p>Gomez, Brad T., Thomas G. Hansford, and George A. Krause. “The
+Republicans should pray for rain: Weather, turnout, and voting in US
+presidential elections.” <em>The Journal of Politics</em> 69.3 (2007): 649–663. <a href="#fnref:5" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:6" role="doc-endnote">
+      <p>Achen, Christopher H., and Larry M. Bartels. 2016. <em>Democracy for
+Realists: Why Elections Do Not Produce Responsive Government.</em> Princeton, NJ:
+Princeton University Press. But see also, Fowler, Anthony and Andrew B.
+Hall. “Do Shark Attacks Influence Presidential Elections? Reassessing a
+Prominent Finding on Voter Competence.” <em>The Journal of Politics</em> 80.4
+(2018): 1423–1427. <a href="#fnref:6" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:7" role="doc-endnote">
+      <p>In the jargon, voters’ voting potential outcomes—i.e., whether and how
+they would counterfactually choose to vote if their polling place were
+reassigned—should be (approximately) independent of the side of the
+block they live on, given that they live on a certain street. In symbols,
+\(V(s,d)\ \rlap{\perp}\mkern2mu\perp Z \mid B\), where \(V(s,d)\)
+denotes whether a voter would vote if their polling place were changed
+(\(s=1\)) or not changed (\(s=0\)) to distance \(d\), \(Z\)
+indicates which side of the street they live on, and \(B\) indicates the
+block they live on. <a href="#fnref:7" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:8" role="doc-endnote">
+      <p>We also required that no one’s polling place on the entire block changed
+between the 2012 and 2016 elections to further isolate the effect of
+increased distance, as distinct from the “shocks” discussed below. <a href="#fnref:8" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:9" role="doc-endnote">
+      <p>Our estimate also reflects the kind of polling place changes captured in
+our data. It’s possible, for instance, that if polling places were moved
+much farther than the typical move in our data then the reduction in
+in-person turnout could be correspondingly greater. <a href="#fnref:9" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+  </ol>
+</div>]]></content><author><name>Johann D. Gaebler</name></author><summary type="html"><![CDATA[Americans have fiercely debated closing and moving polling places in recent years. Civil rights groups like the Leadership Conference Education Fund have opposed high-profile polling location closures and relocations, charging that the changes represent a “particularly pernicious way to disenfranchise voters of color.”1 Many election administrators and other public officials have defended the changes as necessary concessions to efficiency,2 to ensure compliance with regulations like the ADA,3 or as a natural response to declining numbers of in-person voters.4 Democracy Diverted: Polling Place Closures and the Right to Vote, &#8617; In a Georgia County, Deep Distrust Over a Plan to Close Polling Places: &#8617; Dodge City polling place debacle: voter suppression or incompetence?: &#8617; EAVS Deep Dive: Poll Workers and Polling Places: &#8617;]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://www.jgaeb.com/assets/images/polling-places-cover.png" /><media:content medium="image" url="https://www.jgaeb.com/assets/images/polling-places-cover.png" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Slicing Infinity</title><link href="https://www.jgaeb.com/2022/07/18/prevalence.html" rel="alternate" type="text/html" title="Slicing Infinity" /><published>2022-07-18T00:00:00+00:00</published><updated>2022-07-18T00:00:00+00:00</updated><id>https://www.jgaeb.com/2022/07/18/prevalence</id><content type="html" xml:base="https://www.jgaeb.com/2022/07/18/prevalence.html"><![CDATA[<p>Can algorithmic fairness ever be harmful, even to the people it’s intended to
+protect? For some time, researchers have known that adhering to common
+algorithmic fairness criteria like equalized false positive rates <em>can</em>,
+counterintuitively, lead to worse outcomes for marginalized groups.<sup id="fnref:1" role="doc-noteref"><a href="#fn:1" class="footnote" rel="footnote">1</a></sup> The
+crux of the issue, however, is not <em>if</em> such fairness criteria can be harmful,
+but <em>how often</em>. In our new paper on causal fairness, “<a href="/papers/causal_fairness.html">Causal Conceptions of
+Fairness and their Consequences</a>,” <a href="http://hamedn.com">Hamed
+Nilforoshan</a>, <a href="https://steinhardt.nyu.edu/people/ravi-shroff">Ravi
+Shroff</a>, <a href="https://5harad.com">Sharad
+Goel</a>, and I tried to make rigorous the intuition that, for
+a growing number of fairness definitions incorporating causal reasoning, the
+answer is “almost always.”</p>
+
+<p>Formalizing and proving a result that captures this intuition involved
+mathematics that we, at the very least, found to be surprisingly deep and
+challenging. The technicality of our main result was something that developed
+organically over time and from comparatively straightforward intuitions. In
+particlular, the mathematical concept of prevalence, which uses low-dimensional
+cross sections to extend—in a limited way—the idea of Lebesgue measure to
+infinite dimensional spaces, played an especially important role in this
+process.<sup id="fnref:2" role="doc-noteref"><a href="#fn:2" class="footnote" rel="footnote">2</a></sup> To help unpack and motivate our main theorem, I’ve tried to lay
+out below the basics of prevalence and other key ideas that ultimately grew
+into the rigorous end result.</p>
+
+<h2 id="threshold-policies-and-inframarginality">Threshold policies and inframarginality</h2>
+
+<p>Consider the problem faced by a lender with a finite budget making loans of a
+fixed size to a large group of applicants. If, for each applicant, the lender
+has an (accurate) estimate of their likelihood of repaying the loan<sup id="fnref:3" role="doc-noteref"><a href="#fn:3" class="footnote" rel="footnote">3</a></sup> and the
+lender’s only goal is to maximize profit, then the optimal solution from the
+lender’s perspective is straightforward: give loans to applicants in
+decreasing order of their probability of repaying until either the budget is
+exhausted, or the expected return on a loan for the remaining applicants is no
+longer positive.</p>
+
+<p>If the lender behaves in this way, then there will be some probability of
+repayment \(p\) such that all the applicants with probability of repayment
+greater than \(p\) received a loan, and all the applicants with probability
+of repayment less than \(p\) did not. The value \(p\) represents a
+threshold that characterizes<sup id="fnref:4" role="doc-noteref"><a href="#fn:4" class="footnote" rel="footnote">4</a></sup> the entire lending policy—which we
+consequently call a <em>threshold policy</em>.</p>
+
+<p>Threshold policies frequently appear as the optimal approach in problems
+involving some kind of utility. The reason threshold policies are optimal is
+intuitively clear: any other policy would force the lender to overlook someone
+with a higher probability of repayment to give a loan to someone with a lower
+probability of repayment.</p>
+
+<p>Of course, when there’s more than one objective and more than one actor, things
+aren’t always so simple. Imagine the more complicated scenario of an admissions
+committee trying to decide which applicants to admit to a university’s incoming
+class. The university itself doesn’t have the resources to offer a spot to
+every applicant. The committee members all agree that they want the university
+to graduate as many students as possible. In addition, they all agree that they
+want to admit students from a historically disadvantaged group. For simplicity,
+let’s also suppose they also agree that graduating as many students as possible
+and admitting as many students as possible from the target group are the only
+two objectives. What the committee members don’t agree on is how to balance
+them.</p>
+
+<p>Group decisions are hard, and in this case, it’s not necessarily easy—or even
+possible—to find a policy that is optimal (i.e., utility-maximizing) for all
+the committee members at the same time. But it is easy to find policies that
+are optimal for <em>none</em> of them. Consider the applicants in the target group,
+which we’ll call \(a_1\), along with the other applicants, who we’ll say are
+in group \(a_0\). Within each group, everyone on the committee will prefer a
+threshold policy to any other policy that admits the same number of students.
+That is, all else equal, everyone on the committee agrees that a policy that
+admits all the students in group \(a\) with a probability of graduation
+greater than some fixed threshold and none of the students with a probability
+less than it is preferable to any other way of admitting students <em>in that
+group</em>.</p>
+
+<p>When everyone on the committee prefers one policy to another, we say that the
+first policy <em>(strongly) Pareto dominates</em> the second. While no policy choice
+is guaranteed to please everyone, strongly Pareto dominated policies are bad
+choices for the committee, because they represent a missed opportunity to make
+everyone happier.</p>
+
+<p>Following the line of reasoning above, we can say for sure that whatever
+admissions policy the committee lands on, it’ll involve two (possibly equal)
+thresholds, one for each group. Otherwise, the committee would have adopted a
+strongly Pareto dominated admissions policy, meaning that there is an
+alternative policy the entire committee would prefer to the one they actually
+picked—concretely, a policy that would result in more students graduating
+overall, as well as more students being admitted from the target group. We
+refer to such policies as <em>multiple threshold policies</em>. Likewise, everyone on
+the committee will want to admit as many students as they can. So, in fact, we
+can be sure that the policy will be a <em>budget exhausting</em> multiple threshold
+policy.</p>
+
+<p>After a difficult negotiating process, imagine that the committee settles on an
+admissions policy. If they wished to ensure their policy were fair, the
+committee might consult a fairness criterion, like counterfactual equalized
+odds. Counterfactual equalized odds requires that
+\begin{equation}
+  D\ \rlap{\perp}\mkern2mu\perp A \mid Y(1),
+\end{equation}
+where \(D\) represents the committee’s decision, \(A\) represents group
+membership, and \(Y(1)\) represents whether or not an applicant <em>would</em>
+graduate <em>if</em> admitted. In other words, it requires that the committee admit
+individuals at the same rate across groups, both among those applicants who
+counterfactually <em>would</em> graduate, if admitted, and among those individuals who
+counterfactually would <em>not</em> graduate, if admitted.</p>
+
+<p>It’s possible that the committee might find a multiple threshold policy that
+satisfies this criterion. The figure below shows a possible <em>ex ante</em>
+distribution of probability of graduating, conditional both on group membership
+and on whether or not the individual in question would actually graduate if
+admitted. If the committee chose a threshold of \(\tfrac 1 2\) for both
+groups—and if that resulted in a policy that exhausted the budget—then the
+resulting admissions policy would be both Pareto efficient <em>and</em> satisfy
+counterfactual equalized odds.</p>
+
+<figure>
+<p><img src="/assets/posts/prevalence/balanced.svg" alt="Distribution of ex ante probability of graduation" /></p>
+  <figcaption>Distribution of <em>ex ante</em> probability of graduation, faceted by group and by whether the applicant <em>would</em> graduate <em>if</em> admitted. The policy the committee has chosen is both Pareto efficient and satisfies counterfactual equalized odds.</figcaption>
+</figure>
+
+<p>However, the fact that the committee’s policy satisfies counterfactual
+equalized odds seems quite delicate. If the committee retained the same
+admissions policy, but the distributions were only slightly different,
+counterfactual equalized odds would no longer hold.</p>
+
+<figure>
+<p><img src="/assets/posts/prevalence/unbalanced.svg" alt="Distribution of ex ante probability of graduation" /></p>
+  <figcaption>Distribution of <em>ex ante</em> probability of graduation, faceted by group and by whether the applicant <em>would</em> graduate <em>if</em> admitted. The policy the committee has chosen is Pareto efficient, but no longer satisfies counterfactual equalized odds.</figcaption>
+</figure>
+
+<p>And, in fact, counterfactual equalized odds can never hold in this case for
+<em>any</em> budget-exhausting multiple threshold policy the committee might choose.
+To ensure that the policy is budget-exhausting, if we increase one threshold,
+we have to decrease the other, and so any thresholds that equalize the
+admissions rates across groups for people who would graduate if admitted <em>have</em>
+to make the admissions rates different for those who would not graduate if
+admitted.</p>
+
+<p>From this, we can conclude that <em>any</em> policy satisfying counterfactual
+equalized odds will not satisfy the committee. The policy could be improved to
+a different policy everyone on the committee preferred—that is, one that
+graduates a larger number of students overall <em>and</em> admits more students from
+the target group—by instead ignoring the fairness criterion.</p>
+
+<p>This state of affairs is closely related to the statistical notion of
+inframarginality. Statistical metrics that assess an outcome across the entire
+distribution of risk or utility, rather than at the margin, are said to be
+“inframarginal.” Common error metrics like false positive rates—or, in our
+example, admissions rates—depend on both the underlying utility or risk
+distribution <em>and</em> how the decision maker makes marginal decisions—that is,
+where they place the threshold for classifying an observation as “positive,” in
+the case of false positive rates, or for admitting a student, in the case of
+our admissions example. The difficulty of disentangling the role of the
+decision maker from the role of the underlying distribution can lead to issues
+when inframarginal statistics are used to assess decisions: discrepancies in
+inframarginal statistics can reflect either differences in the decision maker’s
+choices <em>or</em> differences in the underlying distributions.</p>
+
+<p>In the example at hand, the inframarginal nature of the metrics used means that
+the fairness criterion can only be satisfied by a Pareto efficient policy in
+the case where the underlying distribution is “favorable” to such an occurrence.
+And the example would seem to indicate that being “favorable” is a fairly
+unusual property: we only had to perturb the distributions a little bit for
+counterfactual equalized odds to require the committee to make sacrifices to
+<em>both</em> of its objectives. This suggests that for a “typical” distribution, the
+committee will find itself in a similar situation.</p>
+
+<p>But what does it mean for a property of distributions to be “typical”? To
+answer that question, we have to take a detour through prevalence and
+infinite-dimensional measure theory.</p>
+
+<h2 id="prevalence-and-fubinis-theorem">Prevalence and Fubini’s Theorem</h2>
+
+<p>To understand prevalence, it’s useful to imagine trying to calculate the volume
+of a three-dimensional orange using only the areas of two-dimensional cross
+sections of the orange. Fubini’s theorem tells us that the volume of the
+original orange can be found by integrating the area of each slice.</p>
+
+<p>Put slightly differently, Fubini’s theorem tells us that the (Lebesgue) measure
+of high-dimensional objects is encoded in the measure of their lower
+dimensional cross sections. If the cross-sections are very large, the original
+object will be large accordingly; if the cross sections are small, then the
+original object will be small in the same proportion.</p>
+
+<p>Unfortunately, Lebesgue measure itself only makes sense on finite dimensional
+spaces. To get an intuitive sense as to why, consider the unit cube
+\(\mathbb{I}^n = [0,1]^n \subseteq \mathbb{R}^n\). In all dimensions, it
+has measure one, i.e., \(\lambda_n[\mathbb{I}^n] = 1\). In
+\(\mathbb{R}^n\), we can subdivide the unit cube into \(2^n\) sub-cubes,
+each with dimensions exactly half that of the unit cube. As a result, each of
+these cubes must have measure \(\tfrac 1 {2^n}\). The sub-cubes are all
+“really” \(n\)-dimensional objects—they have non-empty interior—and so their
+Lebesgue measure is consequently greater than zero. But as \(n\) increases,
+they grow smaller relative to the unit cube. In an infinite dimensional space,
+the sub-cubes would have to be infinitely smaller than the original cube, even
+though both are “real” objects of full dimension, and so both should have
+positive Lebesgue measure.</p>
+
+<p>The key insight of the notion of prevalence is that even though Lebesgue
+measure itself can’t be generalized to infinite dimensions, a particular notion
+of largeness and smallness that it gives rise to can be. Under Lebesgue
+measure, the “smallest” objects are the null, or measure zero, sets; the
+“largest” objects are the co-null or full sets, the sets with complements that
+are null sets. Fubini’s theorem gives us an easy way to discern if a
+finite-dimensional set is null: if all of the set’s cross sections are null,
+then so is the original set.</p>
+
+<p>The same logic, it turns out, can be extended to infinite dimensional spaces.
+We can detect that a subset of an infinite dimensional space is small—or “shy,”
+in the jargon—if all of its finite-dimensional cross sections are null. A set
+is large—or “prevalent”—if all of its cross sections are full.<sup id="fnref:5" role="doc-noteref"><a href="#fn:5" class="footnote" rel="footnote">5</a></sup></p>
+
+<p>Unfortunately, this is not quite enough for us to make sense of “almost any”
+distribution. The reason for this is that the distributions aren’t a vector
+space themselves, but rather a convex set sitting inside a larger infinite
+dimensional vector space. The space of distributions on an arbitrary set is
+analogous to the \(n-1\)-simplex \(\Delta^{n-1}\), where
+\begin{equation}
+  \Delta^{n-1} = \left\{\mathbf{x} \in \mathbb{R}^n : \sum_{i=1}^n x_i =
+  1,\ (\forall i)\ 0 \leq x_i \leq 1\right\}.
+\end{equation}</p>
+
+<p>The points of \(\Delta^{n-1}\) correspond to distributions on a finite set
+of \(n\) elements. And we can talk about generic properties of distributions
+on \(n\) elements through Lebesgue measure and \(\Delta^{n-1}\). For
+instance, “most” distributions on \(n-1\) elements assign positive
+probability to all of the elements. This is easy to see, since the boundary of
+\(\Delta^{n-1}\) is a measure zero subset of the simplex.</p>
+
+<p>However, we might run into issues detecting this fact with Fubini’s theorem if
+we weren’t sufficiently careful with how we constructed our cross sections.
+Consider \(\Delta^1\), which is the line segment joining \((0,1)\) and
+\((1,0)\) in the plane. If we took our cross sections parallel to the
+\(y\)-axis, every cross section would be a null set consisting of a single
+point. All we would learn is that \(\Delta^1\) <em>itself</em> is a null set in
+\(\mathbb{R}^2\).</p>
+
+<figure>
+<p><img src="/assets/posts/prevalence/bad-cross.svg" alt="Cross sections parallel to the y-axis." /></p>
+  <figcaption>Cross sections of \(\Delta^1\) parallel to the \(y\)-axis. The cross section, detailed on the right, contains only a single point, i.e., a null set.</figcaption>
+</figure>
+
+<p>If, instead, we chose our cross sections parallel to the line \(y = -x\),
+something different would happen. Most of the cross sections would be empty.
+But a single cross section would contain all of \(\Delta^1\), which would
+look like a line of length—i.e., measure—\(\sqrt{2}\). Its boundary, the two
+endpoints, would be measure zero, showing that it is small <em>relative to</em>
+\(\Delta^1\). From this, we can conclude that a typical distribution on two
+elements gives positive probability to both elements, as expected.</p>
+
+<figure>
+<p><img src="/assets/posts/prevalence/good-cross.svg" alt="Cross sections parallel to the y = -x." /></p>
+  <figcaption>Cross sections of \(\Delta^1\) parallel to the \(y = -x\). The cross section, detailed on the right, contains all of \(\Delta^1\), of which the boundary forms a null set.</figcaption>
+</figure>
+
+<p>It is this insight that leads to the notion of <em>relative prevalence</em>. Given a
+convex set \(C\)—for example, the set of distributions on an infinite set—we
+can see that a subset \(E\) is small—i.e., shy—<em>relative</em> to \(C\) if we
+can find a collection of cross sections such that \(C\) is large (i.e., has
+non-zero measure) in <em>some</em> of them, but \(E\) is small (i.e., has zero
+measure) in <em>all</em> of them.</p>
+
+<p>It is in this sense of relative prevalence that we say that for almost every
+distribution,<sup id="fnref:6" role="doc-noteref"><a href="#fn:6" class="footnote" rel="footnote">6</a></sup> any policy satisfying various fairness conditions is strongly
+Pareto dominated.</p>
+
+<h2 id="sketch-of-the-main-proof">Sketch of the main proof</h2>
+
+<p>Armed with the notion of relative prevalence, the basic idea of the main proof
+is relatively straightforward: we need to find a way of cutting cross sections
+of the space of distributions such that the space of distributions itself
+appears large, but the set of distributions over which there are Pareto
+efficient policies satisfying the various counterfactual fairness definitions
+appears small.</p>
+
+<p>In the case of the 1-simplex, the key was to take the cross sections parallel
+to the vector \((1, -1)\). This vector has the property that if we start with
+a (typical) distribution \((p, 1 - p)\) and perturb it a small amount in the
+direction \((1, -1)\)—i.e., move to \((p + \epsilon, 1 - p -
+\epsilon)\)—we stay <em>inside</em> the simplex. All we’ve done is to move a small
+amount of probability mass from one element to the other.</p>
+
+<p>In the general case, we’ll take a similar approach, looking for ways to move
+mass around the underlying distribution while ensuring that the total mass is
+constant. If we do this carefully, we’ll be able to stay <em>inside</em> the space of
+distributions—meaning the space of distributions will appear large in the cross
+section—but the distributions in the cross section that allow for a Pareto
+efficient policy will be sparse.</p>
+
+<p>The basic argument then proceeds as follows: take a cross section and assume,
+for the sake of argument, that there is <em>some</em> distribution in it that admits a
+Pareto efficient policy satisfying one of the fairness definitions—say,
+counterfactual equalized odds. For each group, look at how the <em>ex ante</em>
+probability of graduation is distributed among applicants who would not
+graduate if admitted. Suppose there are \(n\) groups. The fact that the
+admissions rates have to be equal for all of the groups among applicants who
+would not graduate if admitted gives \(n - 1\) constraints. We get an
+additional constraint from the fact that a Pareto efficient policy should
+satisfy the budget, giving a total of \(n\) constraints. The committee has
+(at most) \(n\) degrees of freedom in designing its admissions policy,<sup id="fnref:7" role="doc-noteref"><a href="#fn:7" class="footnote" rel="footnote">7</a></sup><sup id="fnref:8" role="doc-noteref"><a href="#fn:8" class="footnote" rel="footnote">8</a></sup>
+one for each threshold it picks. This gives exactly zero <em>net</em> degrees of
+freedom, and so, as one might expect, a simple argument shows that the \(n\)
+degrees of freedom and the \(n\) constraints jointly pin down precisely one
+policy that is a budget-exhausting multiple threshold policy <em>and</em> that
+equalizes the admissions rates among applicants who would not graduate if
+admitted.</p>
+
+<p>However, counterfactual equalized odds imposes additional constraints. In
+particular, the admissions rates for individuals who <em>would</em> graduate if
+admitted <em>also</em> have to be equal across groups. If we choose our cross section
+carefully, we can ensure that, within the cross section, the only part of the
+distribution that changes is the <em>ex ante</em> probability of graduation for
+applicants who would graduate if admitted. That means that in the entire cross
+section, we only have to think about one set of thresholds: the particular set
+of thresholds we found in the previous paragraph. But as we move around the
+cross section, the distributions of <em>ex ante</em> probability of graduation for
+individuals who would graduate if admitted <em>will</em> change, with the proportion
+falling above the corresponding group-specific threshold changing independently
+for each group. The only distributions that can satisfy counterfactual
+equalized odds are those for which the admissions rates for applicants who
+would graduate if admitted are all equal. Within our cross section, which looks
+like a copy of \(\mathbb{R}^k\), these distributions look like a copy of the
+one-dimensional subspace \(\mathbb{R} \cdot \mathbf{1}\), where
+\(\mathbf{1}\) is the ones vector. Since a one-dimensional subspace is much
+smaller than the high-dimensional space containing it, the set of distributions
+over which there are Pareto efficient policies satisfying the various
+counterfactual fairness definitions has null measure in the cross section, as
+desired.</p>
+
+<h3 id="why-is-the-proof-so-long">Why is the proof so long?</h3>
+
+<p>Theorem 1 in our paper rigorously captures the informal content of the
+discussion above. Its actual proof, however, is much more involved than the
+sketch just presented—nearly twice as long as the main text itself. There are
+several reasons for the additional complexity.</p>
+
+<p>First and foremost, prevalence is, in some ways, a fairly demanding condition.
+The shy set—i.e., the set of distributions admitting a Pareto efficient policy
+satisfying one of the counterfactual fairness definitions—has to appear small
+in <em>every</em> cross section. This poses difficulties because, for general
+distributions on continuous covariates, many different kinds of corner cases
+can arise. Relevant quantities, such as \(\mathbb{E}[D \mid Y(1) = y]\), can
+fail to be well-defined if, for instance, \(\Pr(Y(1) = y) = 0\). Thresholds
+can fall exactly between strata when additional conditioning on a reduced set
+of covariates \(W\) is introduced. These and other similar corner cases are,
+indeed, atypical, but dealing with them introduces additional complexity into
+the proof.</p>
+
+<p>Prevalence is also demanding in the sense that it also places constraints on
+the descriptive complexity of the sets involved. The convex set \(C\) must be
+completely metrizable, and a set \(E\) that is shy relative to \(C\) must
+be contained in a shy universally measurable set. Determining the complexity of
+the sets involved in the proof is complicated somewhat by the fact that the
+space of totally bounded measures, which is the ambient vector space of which
+the space of distributions forms a part, is non-separable, and in general can
+have unwieldy topological properties.</p>
+
+<p>Lastly, the cross sections must be chosen so that the amount of mass above and
+below the thresholds changes as we move around the cross section, no matter
+where the thresholds are. While in particular cases, such as the admissions
+example presented above, it is possible to explicitly construct the cross
+sections so that this property holds, in general this is very difficult. In
+particular, the hypotheses of the theorem are extremely general, and place
+almost no restrictions on the collection of utility functions
+\(\mathcal{U}\) or the covariate space \(\mathcal{X}\). As a result,
+almost nothing can be said in advance about what distributions of utility can
+arise—and, more importantly, what restrictions there might be on the support of
+the distributions that <em>can</em> arise. Thus, a special construction known as a
+measure-theoretic union is required to find adequate cross sections.</p>
+
+<h2 id="beyond-causal-fairness">Beyond causal fairness</h2>
+
+<p>Looking forward, the idea of a “typical” distribution seems like a useful one,
+with potential applications to a wide variety of theoretical problems in
+statistics and machine learning. Researchers often seek to characterize how
+various novel methods or algorithms behave under “normal” circumstances when
+that behavior depends in part on a distribution about which very little is
+known in advance. Prevalence offers an elegant mathematical framework for
+approaching questions about the “typical” or “generic” behavior of
+distributions with, we hope, further potential to illuminate questions of this
+kind.</p>
+<div class="footnotes" role="doc-endnotes">
+  <ol>
+    <li id="fn:1" role="doc-endnote">
+      <p>See, e.g., “<a href="https://arxiv.org/abs/1701.08230">Algorithmic Decision Making and the Cost of
+Fairness</a>” and “<a href="https://arxiv.org/abs/1808.00023">The Measure and
+Mismeasure of Fairness: A Critical Review of Fair Machine
+Learning</a>” <a href="#fnref:1" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:2" role="doc-endnote">
+      <p>For additional mathematical details on prevalence, including relative
+prevalence, the variant we use, see Ott &amp; Yorke’s review paper,
+“<a href="https://www.ams.org/journals/bull/2005-42-03/S0273-0979-05-01060-8/">Prevalence</a>.” <a href="#fnref:2" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:3" role="doc-endnote">
+      <p>For simplicity, we’ll imagine that loan recipients either default and
+fail to repay the entire loan, or repay back the loan in full with
+interest. <a href="#fnref:3" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:4" role="doc-endnote">
+      <p>This is not, strictly speaking, correct. If there are applicants whose
+probability of repayment is exactly \(p\), then the lender may choose to
+make loans to them in various ways without increasing or decreasing their
+profit, as long as the number of loans remains constant. If the number of
+people having any particular probability of repayment is small relative to
+the total number of people, however, one can safely overlook this point. <a href="#fnref:4" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:5" role="doc-endnote">
+      <p>Such sets are actually said to be <em>\(k\)-shy</em> or <em>\(k\)-prevalent</em>.
+There exist sets that are shy in the strict sense but not \(k\)-shy for
+any \(k \in \mathbb{N}\), and similarly for prevalent sets. However,
+the distinction is not important here. <a href="#fnref:5" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:6" role="doc-endnote">
+      <p>Or, more accurately, almost every \(\mathcal{U}\)-fine distribution. See
+Appendix E.6 for additional information. <a href="#fnref:6" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:7" role="doc-endnote">
+      <p>While every Pareto efficient policy must be a budget-exhausting multiple
+threshold policy, the reverse is not necessarily true. <a href="#fnref:7" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:8" role="doc-endnote">
+      <p>When the distribution induces atoms on the utility scale, this can
+introduce additional—even infinite—degrees of freedom in certain
+circumstances. See the discussion of \(\mathcal{U}\)-fineness and
+Appendix E.6 in the paper. <a href="#fnref:8" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+  </ol>
+</div>]]></content><author><name>Johann D. Gaebler</name></author><summary type="html"><![CDATA[Can algorithmic fairness ever be harmful, even to the people it’s intended to protect? For some time, researchers have known that adhering to common algorithmic fairness criteria like equalized false positive rates can, counterintuitively, lead to worse outcomes for marginalized groups.1 The crux of the issue, however, is not if such fairness criteria can be harmful, but how often. In our new paper on causal fairness, “Causal Conceptions of Fairness and their Consequences,” Hamed Nilforoshan, Ravi Shroff, Sharad Goel, and I tried to make rigorous the intuition that, for a growing number of fairness definitions incorporating causal reasoning, the answer is “almost always.” See, e.g., “[Algorithmic Decision Making and the Cost of &#8617;]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://www.jgaeb.com/assets/images/prevalence-cover.jpg" /><media:content medium="image" url="https://www.jgaeb.com/assets/images/prevalence-cover.jpg" xmlns:media="http://search.yahoo.com/mrss/" /></entry><entry><title type="html">Autodiff for Implicit Functions in Stan</title><link href="https://www.jgaeb.com/2021/09/13/implicit-autodiff.html" rel="alternate" type="text/html" title="Autodiff for Implicit Functions in Stan" /><published>2021-09-13T00:00:00+00:00</published><updated>2021-09-13T00:00:00+00:00</updated><id>https://www.jgaeb.com/2021/09/13/implicit-autodiff</id><content type="html" xml:base="https://www.jgaeb.com/2021/09/13/implicit-autodiff.html"><![CDATA[<p>One of the things that makes <a href="https://mc-stan.org">Stan</a> powerful is that—in
+addition to a large library of standard mathematical functions (e.g.,
+\(\exp(x)\), \(x^y\), \(x + y\), \(\Gamma(x)\), etc.)—it also supports
+the use of higher-order functions, such as such as solving a user-specified
+system of ODEs. This greatly expands the range of Bayesian models Stan can
+handle.</p>
+
+<p>One such higher-order function is Stan’s
+<a href="https://mc-stan.org/docs/2_27/stan-users-guide/algebra-solver-chapter.html">algebra solver</a>,
+which is useful for building models that require <a href="https://en.wikipedia.org/wiki/Implicit_function">implicit
+functions</a>.<sup id="fnref:0" role="doc-noteref"><a href="#fn:0" class="footnote" rel="footnote">1</a></sup> Implicit
+functions show up often when one is looking for “steady states.” For instance,
+in <a href="https://en.wikipedia.org/wiki/Pharmacokinetics">pharmacokinetics</a>, one
+often wants to know how much of a drug will build up in a patient’s body if
+they take a fixed dose at regular intervals. If the patient takes a doses of
+size \(\delta\) at intervals of length \(\tau\), then we’re looking for the
+dose \(x_0\) such that \(f(x_0 + \delta, \tau) = x_0\), where \(f(x, t)\)
+is the concentration of the drug in the patient’s body at time \(t\) if the
+concentration at time \(0\) was \(x\).<sup id="fnref:1" role="doc-noteref"><a href="#fn:1" class="footnote" rel="footnote">2</a></sup></p>
+
+<p>The challenge with higher-order functions is finding a way to efficiently
+implement
+<a href="https://en.wikipedia.org/wiki/Automatic_differentiation">automatic differentiation</a>
+for them. The <a href="https://en.wikipedia.org/wiki/Hamiltonian_Monte_Carlo">HMC</a>
+sampler repeatedly differentiates the density of the distribution from which
+we’re sampling. If our model involves, for example, the solution to an ODE,
+then we have differentiate the solution with respect to the inputs, even though
+the “solution” itself is the result of numerical integration and not
+necessarily something we can write down in closed form. This requires some
+cleverness. The algebra solver presents a similar challenge, as typically we
+cannot write down \(x\) as a closed-form function of \(\delta\) and
+\(\tau\) when all we know is the dependence \(f(x + \delta, \tau) = x\).
+Over the past few months, I’ve been working to help Stan calculate these
+derivatives more efficiently.</p>
+
+<h2 id="implicit-functions">Implicit Functions</h2>
+
+<p>The easiest way to think about the algebraic solvers is through the
+<a href="https://en.wikipedia.org/wiki/Implicit_function_theorem">implicit function theorem</a>.
+The implicit function theorem states that if we have an equation of the form
+\(f(x, y) = 0\),<sup id="fnref:2" role="doc-noteref"><a href="#fn:2" class="footnote" rel="footnote">3</a></sup> and \(f\) is reasonably well-behaved, then, given a
+solution \((x_0, y_0)\), we can find a function \(g\) such that \((x,
+g(x))\) is a solution—i.e., \(f(x, g(x)) = 0\)—for all \(x\) in some
+neighborhood around \(x_0\). The function \(g(x)\), which “traces out”
+solutions to \(f(x, y) = 0\) as a function of \(x\), is our implicit
+function. There is an obstacle to \(g(x)\)’s existence: at least locally,
+there needs to be only a single value of \(y\) corresponding to each \(x\)
+such that \(f(x, y) = 0\). This will fail if the curve of solutions doubles
+back on itself, which, in turn can only happen where \( \tfrac {\text{d} y}
+{\text{d} x} \to \infty\). So, to get an implicit function \(g(x)\) in a
+neighborhood of \(x_0\), we need that \( \tfrac {\text{d} y} {\text{d} x}
+\) is not infinite, or, what comes to the same thing, that the derivative \(
+\tfrac {\partial f} {\partial y} \) exists and is non-zero at the solution
+\((x_0, y_0)\).</p>
+
+<figure>
+<p><img src="/assets/posts/implicit-autodiff/limacon.svg" alt="An implicitly defined limaçon trisectrix." /></p>
+  <figcaption>An implicitly defined limaçon trisectrix, given by \(x^2 + y^2 = (x^2 + y^2 - 2x)^2\).</figcaption>
+</figure>
+
+<p>This figure illustrates a
+<a href="https://en.wikipedia.org/wiki/Limaçon_trisectrix">limaçon trisectrix</a>,
+defined implicitly by \(x^2 + y^2 = (x^2 + y^2 - 2x)^2\).<sup id="fnref:3" role="doc-noteref"><a href="#fn:3" class="footnote" rel="footnote">4</a></sup> The variable
+\(y\) is a continuously differentiable function of \(x\) locally near the
+blue line, but not the red, where \( \tfrac {\partial f} {\partial y} = 0 \).</p>
+
+<p>More formally, the implicit function theorem states that if \(f :
+\mathbb{R}^{n+m} \to \mathbb{R}^m\) is continuously differentiable,
+\(\mathbf{x}_0 \in \mathbb{R}^n\), \(\mathbf{y}_0 \in \mathbb{R}^m\), and
+\(f(\mathbf{x}_0, \mathbf{y}_0) = 0\), and \(\tfrac {\partial f} {\partial
+\mathbf{y}} \upharpoonright_{\mathbf{y} = \mathbf{y}_0} \) is invertible,<sup id="fnref:4" role="doc-noteref"><a href="#fn:4" class="footnote" rel="footnote">5</a></sup>
+then there is an (implicit) function \(g : \mathbb{R}^n \to \mathbb{R}^m \)
+defined locally around \(\mathbf{x}_0\) such that \(f(\mathbf{x},
+g(\mathbf{x})) = 0\). What’s more, it follows directly from differentiating
+\(f(\mathbf{x}, g(\mathbf{x})) = 0\) that<sup id="fnref:5" role="doc-noteref"><a href="#fn:5" class="footnote" rel="footnote">6</a></sup>
+  \[
+    \frac {\partial g} {\partial \mathbf{x}} = - \left[ \frac {\partial f}
+    {\partial \mathbf{y}} \upharpoonright_{\mathbf{y} = g(\mathbf{x})}
+    \right]^{-1} \frac {\partial f} {\partial \mathbf{x}}.
+  \]</p>
+
+<p>This is the key point that makes it possible to use autodiff on implicit
+functions. The implicit function theorem doesn’t tell us how to calculate the
+function \(g(\mathbf{x})\)—that’s what the algebra solvers are for—but it
+<em>does</em>  allows us to back out the gradient of \(g\) using <em>only known
+quantities:</em> the solution, \((\mathbf{x}, g(\mathbf{x}))\), and the algebraic
+system function, \(f(\mathbf{x}, \mathbf{y})\). (One could, in principle,
+implement the algebra solver itself on the autodiff stack and try to extract
+the gradient that way, but that would be impracticably slow.<sup id="fnref:6" role="doc-noteref"><a href="#fn:6" class="footnote" rel="footnote">7</a></sup>)</p>
+
+<h2 id="two-algorithms">Two Algorithms</h2>
+
+<p>The implicit function theorem makes autodiff using implicit functions
+<em>possible.</em> But the real question is, how <em>fast</em> can we make it?</p>
+
+<p>If you’re unfamiliar with autodiff, there are some
+<a href="https://arxiv.org/pdf/1811.05031">great</a>
+<a href="https://arxiv.org/abs/1502.05767">overviews</a> (and
+<a href="https://epubs.siam.org/doi/book/10.1137/1.9780898717761">reference texts</a>).
+Here, it is enough to understand that to make reverse-mode autodiff work, all
+we need to know is, for each “atomic function” \(f : \mathbb{R}^n \to
+\mathbb{R}^m \) that shows up in our model (e.g., \(\cos(x)\) or \(x + y\)
+or an implicit function calculated using the algebraic solver), how to
+calculate the product \(\boldsymbol{\xi} \tfrac {\partial f} {\partial
+\mathbf{x}}\), where \(\boldsymbol{\xi}\) is a size \(m\) row vector or
+“cotangent.”</p>
+
+<p>In the case of an implicit function \(g(\mathbf{x})\), the implicit function
+theorem above suggests an obvious way to do this.</p>
+
+<h3 id="algorithm-1-the-naïve-method">Algorithm 1: The Naïve Method</h3>
+
+<p><em>Data:</em> The algebraic system function \(f(\mathbf{x}, \mathbf{y})\), a
+solution \((\mathbf{x}_0, \mathbf{y}_0)\), and an initial cotangent
+\(\boldsymbol{\xi}\).</p>
+
+<p><em>Result:</em> The adjoint of the implicit function \(\mathbf{x} \mapsto
+\mathbf{y}\) with respect to the initial cotangent \(\boldsymbol{\xi}\)
+evaluated at \( \mathbf{x}_0 \), i.e., the product \(
+\boldsymbol{\xi}_{\operatorname{out}} = \boldsymbol{\xi} \left[ \tfrac
+{\partial \mathbf{y}} {\partial \mathbf{x}} \upharpoonright_{\mathbf{x}_0}
+\right] \).</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">For</code> \(i = 1, \ldots, n\)
+    <ul>
+      <li>Calculate \(\tfrac {\partial f} {\partial x_i}\). <em>(One forward-mode
+pass.)</em></li>
+    </ul>
+  </li>
+  <li><code class="language-plaintext highlighter-rouge">For</code> \(i = 1, \ldots, m\)
+    <ul>
+      <li>Calculate \(\tfrac {\partial f} {\partial y_i}\). <em>(One forward-mode pass.)</em></li>
+    </ul>
+  </li>
+  <li>Calculate the LU-decomposition of \(\tfrac {\partial f} {\partial \mathbf{y}}\).</li>
+  <li><code class="language-plaintext highlighter-rouge">For</code> \(i = 1, \ldots, n\)
+    <ul>
+      <li>Calculate \(\tfrac {\partial \mathbf{y}} {\partial x_i} = \left[ \tfrac
+{\partial f} {\partial \mathbf{y}} \right]^{-1} \frac {\partial f}
+{\partial x_i}\). <em>(One matrix solve.)</em></li>
+    </ul>
+  </li>
+  <li>Calculate \(\boldsymbol{\xi}_{\text{out}} = \boldsymbol{\xi}
+\tfrac {\partial \mathbf{y}} {\partial \mathbf{x}}\). <em>(One matrix
+multiplication.)</em></li>
+  <li><code class="language-plaintext highlighter-rouge">Return</code> \(\boldsymbol{\xi}_{\operatorname{out}}\).</li>
+</ol>
+
+<p>Inverting \(\tfrac {\partial f} {\partial \mathbf{y}}\) is quite expensive: in
+addition to an LU-decomposition, it also requires \(n\) matrix solves and
+\(n\) forward-mode autodiff passes.</p>
+
+<p>However, if we’re slightly more clever, we can avoid much of the expense of the
+matrix inversion, and reduce the number of autodiff passes.<sup id="fnref:7" role="doc-noteref"><a href="#fn:7" class="footnote" rel="footnote">8</a></sup></p>
+
+<h3 id="algorithm-2-the-adjoint-method">Algorithm 2: The Adjoint Method</h3>
+
+<p><em>Data:</em> The algebraic system function \(f(\mathbf{x}, \mathbf{y})\), a
+solution \((\mathbf{x}_0, \mathbf{y}_0)\), and an initial cotangent
+\(\boldsymbol{\xi}\).</p>
+
+<p><em>Result:</em> The adjoint of the implicit function \(\mathbf{x} \mapsto
+\mathbf{y}\) with respect to the initial cotangent \(\boldsymbol{\xi}\)
+evaluated at \( \mathbf{x}_0 \), i.e., the product \(
+\boldsymbol{\xi}_{\operatorname{out}} = \boldsymbol{\xi} \left[ \tfrac
+{\partial \mathbf{y}} {\partial \mathbf{x}} \upharpoonright_{\mathbf{x}_0}
+\right] \).</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">For</code> \(i = 1, \ldots, m\)
+    <ul>
+      <li>Calculate \(\tfrac {\partial f} {\partial y_i}\). <em>(One forward-mode pass.)</em></li>
+    </ul>
+  </li>
+  <li>Calculate the LU-decomposition of \(\tfrac {\partial f} {\partial \mathbf{y}}\).</li>
+  <li>Calculate \(\boldsymbol{\eta} = \boldsymbol{\xi} \left[ \frac {\partial f}
+{\partial \mathbf{y}} \right]^{-1} \). <em>(One matrix solve.)</em></li>
+  <li>Calculate \(\boldsymbol{\xi}_{\text{out}} = \boldsymbol{\eta}
+ \tfrac {\partial f} {\partial \mathbf{x}}\). <em>(One reverse-mode pass.)</em></li>
+  <li><code class="language-plaintext highlighter-rouge">Return</code> \(\boldsymbol{\xi}_{\operatorname{out}}\).</li>
+</ol>
+
+<p>Algorithm 2, by way of contrast, replaces the \(n\) forward-mode passes and
+matrix solves with a single reverse-mode pass. Since each autodiff pass requires
+(roughly) the same number of operations as calculating the value of a function
+itself,<sup id="fnref:8" role="doc-noteref"><a href="#fn:8" class="footnote" rel="footnote">9</a></sup> the savings are significant.</p>
+
+<h2 id="testing-it-out-an-example-from-pharmacology">Testing it Out: An Example from Pharmacology</h2>
+
+<p>To test out the two algorithms, we borrow a simple example from pharmacology.
+We consider a two-compartment model. Patient \(i\) consumes a dose
+\(\delta\) of a drug at intervals of length \(\tau\). The concentration of
+the drug in the central and peripheral compartments of patient \(i\)
+satisfies the ODE<sup id="fnref:9" role="doc-noteref"><a href="#fn:9" class="footnote" rel="footnote">10</a></sup>
+  \begin{align*}
+    y_{i, \text{cen}}’(t) &amp;= -\kappa_{i, \text{cen}} \cdot y_{i,
+      \text{cen}}(t), \\<br />
+    y_{i, \text{per}}’(t) &amp;= \kappa_{i, \text{cen}} \cdot y_{i, \text{cen}}(t)
+      - \kappa_{i, \text{per}} \cdot y_{i, \text{per}}(t),
+  \end{align*}
+where \(t\) is the time since the last dose. The patient is at a “steady
+state” when
+  \begin{align*}
+    y_{i, \text{cen}}(0) - y_{i, \text{cen}}(\tau) &amp;= \delta, \\<br />
+    y_{i, \text{per}}(0) - y_{i, \text{per}}(\tau) &amp;= 0.
+  \end{align*}
+Measurements are taken of concentration in the main compartment for each
+patient at steady state.  Measurement \(m_{i, k}\) taken at time \(t_{i,
+k}\) after the last dose satisfies
+  \[
+    \log(m_{i, k}) \sim \mathcal{N} \left( \log(y_{\text{per}}(t_{i, k})),
+    \tfrac 1 4 \right).
+  \]</p>
+
+<p>To complete the model, we put priors on \(\kappa_{i, \text{cen}}\) and
+\(\kappa_{i, \text{per}}\). In particular, our prior is that they are i.i.d.
+lognormal random variables, i.e.,
+  \[
+    \log(\kappa_{i, j}) \sim \mathcal{N} \left( 0, \tfrac 1 4 \right),
+  \]
+for \(j \in \{ \text{cen}, \text{per} \}\).</p>
+
+<h3 id="stan-implementation-and-results">Stan Implementation and Results</h3>
+
+<p>It’s straightforward to represent the pharmacological model above directly in
+Stan.</p>
+
+<figure class="highlight"><pre><code class="language-stan" data-lang="stan"><span class="nn">functions</span> <span class="p">{</span>
+  <span class="cm">/* Solution to drug concentration ODE given inital concentration, time elapsed,
+   * and diffusion parameters.
+   */</span>
+  <span class="kt">vector</span><span class="p">[]</span> <span class="nf">drug_conc</span><span class="p">(</span><span class="kt">vector</span> <span class="nv">y_cen</span><span class="p">,</span> <span class="kt">vector</span> <span class="nv">y_per</span><span class="p">,</span> <span class="kt">vector</span> <span class="nv">kappa_cen</span><span class="p">,</span>
+                     <span class="kt">vector</span> <span class="nv">kappa_per</span><span class="p">,</span> <span class="kt">vector</span> <span class="nv">ts</span><span class="p">,</span> <span class="kt">int</span> <span class="nv">N</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">vector</span><span class="p">[</span><span class="nv">N</span><span class="p">]</span> <span class="nv">y_cen_out</span> <span class="o">=</span> <span class="nb">exp</span><span class="p">(</span><span class="o">-</span><span class="nv">kappa_cen</span> <span class="o">.*</span> <span class="nv">ts</span><span class="p">)</span> <span class="o">.*</span> <span class="nv">y_cen</span><span class="p">;</span>
+    <span class="kt">vector</span><span class="p">[</span><span class="nv">N</span><span class="p">]</span> <span class="nv">y_per_out</span> <span class="o">=</span> <span class="p">(</span><span class="nv">kappa_cen</span> <span class="o">./</span> <span class="p">(</span><span class="nv">kappa_per</span> <span class="o">-</span> <span class="nv">kappa_cen</span><span class="p">))</span>
+                            <span class="o">.*</span> <span class="p">(</span><span class="nb">exp</span><span class="p">(</span><span class="o">-</span><span class="nv">kappa_cen</span> <span class="o">.*</span> <span class="nv">ts</span><span class="p">)</span> <span class="o">-</span> <span class="nb">exp</span><span class="p">(</span><span class="o">-</span><span class="nv">kappa_per</span> <span class="o">.*</span> <span class="nv">ts</span><span class="p">))</span>
+                            <span class="o">.*</span> <span class="nv">y_cen</span> <span class="o">+</span> <span class="nb">exp</span><span class="p">(</span><span class="o">-</span><span class="nv">kappa_per</span> <span class="o">.*</span> <span class="nv">ts</span><span class="p">)</span> <span class="o">.*</span> <span class="nv">y_per</span><span class="p">;</span>
+
+    <span class="k">return</span> <span class="p">{</span> <span class="nv">y_cen_out</span><span class="p">,</span> <span class="nv">y_per_out</span> <span class="p">};</span>
+  <span class="p">}</span>
+
+  <span class="c1">// Functor with appropriate signature for algebraic solver.</span>
+  <span class="kt">vector</span> <span class="nf">f</span><span class="p">(</span><span class="kt">vector</span> <span class="nv">y</span><span class="p">,</span> <span class="kt">vector</span> <span class="nv">kappas</span><span class="p">,</span> <span class="kt">real</span><span class="p">[]</span> <span class="nv">x_r</span><span class="p">,</span> <span class="kt">int</span><span class="p">[]</span> <span class="nv">x_i</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// Unpack x_r.</span>
+    <span class="kt">real</span> <span class="nv">delta</span> <span class="o">=</span> <span class="nv">x_r</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+    <span class="kt">real</span> <span class="nv">tau</span> <span class="o">=</span> <span class="nv">x_r</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+
+    <span class="c1">// Unpack x_i.</span>
+    <span class="kt">int</span> <span class="nv">n</span> <span class="o">=</span> <span class="nv">x_i</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+
+    <span class="c1">// All of the intervals are tau.</span>
+    <span class="kt">vector</span><span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="nv">ts</span> <span class="o">=</span> <span class="nb">rep_vector</span><span class="p">(</span><span class="nv">tau</span><span class="p">,</span> <span class="nv">n</span><span class="p">);</span>
+
+    <span class="cm">/* The first n entries of y are the concentrations in the central
+     * compartment, while the last n entries of y are the concentrations in the
+     * peripheral compartments. Likewise for kappa.
+     */</span>
+    <span class="kt">vector</span><span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="nv">y_cen</span> <span class="o">=</span> <span class="nv">y</span><span class="p">[</span><span class="o">:</span><span class="nv">n</span><span class="p">];</span>
+    <span class="kt">vector</span><span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="nv">y_per</span> <span class="o">=</span> <span class="nv">y</span><span class="p">[(</span><span class="nv">n</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">:</span><span class="p">];</span>
+    <span class="kt">vector</span><span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="nv">kappa_cen</span> <span class="o">=</span> <span class="nv">kappas</span><span class="p">[</span><span class="o">:</span><span class="nv">n</span><span class="p">];</span>
+    <span class="kt">vector</span><span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="nv">kappa_per</span> <span class="o">=</span> <span class="nv">kappas</span><span class="p">[(</span><span class="nv">n</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">:</span><span class="p">];</span>
+
+    <span class="c1">// Calculate the concentrations after tau.</span>
+    <span class="kt">vector</span><span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="nv">y_res</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="nf">drug_conc</span><span class="p">(</span><span class="nv">y_cen</span><span class="p">,</span> <span class="nv">y_per</span><span class="p">,</span> <span class="nv">kappa_cen</span><span class="p">,</span> <span class="nv">kappa_per</span><span class="p">,</span> <span class="nv">ts</span><span class="p">,</span> <span class="nv">n</span><span class="p">);</span>
+
+    <span class="cm">/* If a steady state has been reached, the difference between the
+     * concentration after tau (with a dose delta) should be the same as the
+     * current state.
+     */</span>
+    <span class="k">return</span> <span class="nb">append_row</span><span class="p">(</span><span class="nv">y_res</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="nb">rep_vector</span><span class="p">(</span><span class="nv">delta</span><span class="p">,</span> <span class="nv">n</span><span class="p">),</span> <span class="nv">y_res</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">-</span> <span class="nv">y</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nn">data</span> <span class="p">{</span>
+  <span class="kt">real</span><span class="o">&lt;</span><span class="na">lower</span><span class="o">=</span><span class="mi">0</span><span class="o">&gt;</span> <span class="nv">delta</span><span class="p">;</span>              <span class="c1">// Dosage</span>
+  <span class="kt">real</span><span class="o">&lt;</span><span class="na">lower</span><span class="o">=</span><span class="mi">0</span><span class="o">&gt;</span> <span class="nv">tau</span><span class="p">;</span>                <span class="c1">// Dose interval</span>
+  <span class="kt">int</span> <span class="nv">n</span><span class="p">;</span>                            <span class="c1">// Number of patients</span>
+  <span class="kt">int</span> <span class="nv">m</span><span class="p">;</span>                            <span class="c1">// Number of observations</span>
+  <span class="kt">vector</span><span class="o">&lt;</span><span class="na">lower</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="na">upper</span><span class="o">=</span><span class="nv">tau</span><span class="o">&gt;</span><span class="p">[</span><span class="nv">m</span><span class="p">]</span> <span class="nv">ts</span><span class="p">;</span>  <span class="c1">// Times of observations (since last dose)</span>
+  <span class="kt">int</span><span class="o">&lt;</span><span class="na">lower</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="na">upper</span><span class="o">=</span><span class="nv">n</span><span class="o">&gt;</span> <span class="nv">idx</span><span class="p">[</span><span class="nv">m</span><span class="p">];</span>      <span class="c1">// Patient corresponding to observation</span>
+  <span class="kt">vector</span><span class="o">&lt;</span><span class="na">lower</span><span class="o">=</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">[</span><span class="nv">m</span><span class="p">]</span> <span class="nv">obs</span><span class="p">;</span>           <span class="c1">// Observed concetrations</span>
+  <span class="kt">vector</span><span class="o">&lt;</span><span class="na">lower</span><span class="o">=</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="nv">y_guess_cen</span><span class="p">;</span>   <span class="c1">// Guess for central compartment.</span>
+  <span class="kt">vector</span><span class="o">&lt;</span><span class="na">lower</span><span class="o">=</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="nv">y_guess_per</span><span class="p">;</span>   <span class="c1">// Guess for peripheral compartment.</span>
+<span class="p">}</span>
+
+<span class="nn">transformed data</span> <span class="p">{</span>
+  <span class="c1">// Reshape the data for the algebra solver.</span>
+  <span class="kt">vector</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="nv">n</span><span class="p">]</span> <span class="nv">y_guess</span> <span class="o">=</span> <span class="nb">append_row</span><span class="p">(</span><span class="nv">y_guess_cen</span><span class="p">,</span> <span class="nv">y_guess_per</span><span class="p">);</span>
+  <span class="kt">real</span> <span class="nv">x_r</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>         <span class="o">=</span> <span class="p">{</span> <span class="nv">delta</span><span class="p">,</span> <span class="nv">tau</span> <span class="p">};</span>
+  <span class="kt">int</span>  <span class="nv">x_i</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>         <span class="o">=</span> <span class="p">{</span> <span class="nv">n</span> <span class="p">};</span>
+<span class="p">}</span>
+
+<span class="nn">parameters</span> <span class="p">{</span>
+  <span class="kt">vector</span><span class="o">&lt;</span><span class="na">lower</span><span class="o">=</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="nv">kappa_cen</span><span class="p">;</span> <span class="c1">// Dispersion from central compartment</span>
+  <span class="kt">vector</span><span class="o">&lt;</span><span class="na">lower</span><span class="o">=</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="nv">kappa_per</span><span class="p">;</span> <span class="c1">// Dispersion from peripheral compartment</span>
+<span class="p">}</span>
+
+<span class="nn">transformed parameters</span> <span class="p">{</span>
+  <span class="c1">// Reshape dispersion parameters for algebra solver.</span>
+  <span class="kt">vector</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="nv">n</span><span class="p">]</span> <span class="nv">kappas</span> <span class="o">=</span> <span class="nb">append_row</span><span class="p">(</span><span class="nv">kappa_cen</span><span class="p">,</span> <span class="nv">kappa_per</span><span class="p">);</span>
+
+  <span class="c1">// Get the steady-state for each patient.</span>
+  <span class="kt">vector</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="nv">n</span><span class="p">]</span> <span class="nv">y_steady</span> <span class="o">=</span> <span class="nb">algebra_solver</span><span class="p">(</span><span class="nv">f</span><span class="p">,</span> <span class="nv">y_guess</span><span class="p">,</span> <span class="nv">kappas</span><span class="p">,</span> <span class="nv">x_r</span><span class="p">,</span> <span class="nv">x_i</span><span class="p">);</span>
+  <span class="kt">vector</span><span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="nv">y_steady_cen</span> <span class="o">=</span> <span class="nv">y_steady</span><span class="p">[</span><span class="o">:</span><span class="nv">n</span><span class="p">];</span>
+  <span class="kt">vector</span><span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="nv">y_steady_per</span> <span class="o">=</span> <span class="nv">y_steady</span><span class="p">[(</span><span class="nv">n</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">:</span><span class="p">];</span>
+
+  <span class="cm">/* Get the concentrations in the central compartment at each time observation,
+   * given the currently sampled diffusion parameters.
+   */</span>
+  <span class="kt">vector</span><span class="p">[</span><span class="nv">m</span><span class="p">]</span> <span class="nv">y_true</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="nf">drug_conc</span><span class="p">(</span><span class="nv">y_steady_cen</span><span class="p">[</span><span class="nv">idx</span><span class="p">],</span> <span class="nv">y_steady_per</span><span class="p">[</span><span class="nv">idx</span><span class="p">],</span>
+                                  <span class="nv">kappa_cen</span><span class="p">[</span><span class="nv">idx</span><span class="p">],</span> <span class="nv">kappa_per</span><span class="p">[</span><span class="nv">idx</span><span class="p">],</span> <span class="nv">ts</span><span class="p">,</span> <span class="nv">m</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="nn">model</span> <span class="p">{</span>
+  <span class="nv">kappa_cen</span> <span class="o">~</span> <span class="nb">lognormal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="mi">4</span><span class="p">);</span>
+  <span class="nv">kappa_per</span> <span class="o">~</span> <span class="nb">lognormal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="mi">4</span><span class="p">);</span>
+  <span class="nv">obs</span> <span class="o">~</span> <span class="nb">lognormal</span><span class="p">(</span><span class="nb">log</span><span class="p">(</span><span class="nv">y_true</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="mf">1.0</span><span class="o">/</span><span class="mi">4</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="nn">generated quantities</span> <span class="p">{</span>
+  <span class="kt">real</span> <span class="nv">fake_obs</span><span class="p">[</span><span class="nv">m</span><span class="p">]</span> <span class="o">=</span> <span class="nb">lognormal_rng</span><span class="p">(</span><span class="nb">log</span><span class="p">(</span><span class="nv">y_true</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="mf">1.0</span><span class="o">/</span><span class="mi">4</span><span class="p">);</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>To test it out, we simulate
+<a href="/assets/posts/implicit-autodiff/fake_data.R">fake data</a> for patient
+populations of a rage of different sizes. For each population size, we generate
+100 fake datasets, each with approximately 100 observations for each patient,
+and then fit the Stan model shown above. We repeat this experiment using both
+the naïve and adjoint algorithms.<sup id="fnref:10" role="doc-noteref"><a href="#fn:10" class="footnote" rel="footnote">11</a></sup> The results are shown below.</p>
+
+<figure>
+<p><img src="/assets/posts/implicit-autodiff/plot_raw.svg" alt="A plot of the raw runtimes of the naïve and adjoint algorithms." class="figure" /></p>
+  <figcaption>Raw runtimes of the naïve and adjoint methods. Runtimes of the adjoint algorithm have been translated to the right for better readability.</figcaption>
+</figure>
+
+<p>As expected, there is a clear speedup as the size of the problem gets larger.
+To better visualize the speedup across all orders of magnitude, we also
+calculate the relative speedup for each problem size.</p>
+
+<figure>
+<p><img src="/assets/posts/implicit-autodiff/plot_quot.svg" alt="A plot of the relative speedup of the adjoint algorithm and new algorithms." class="figure" /></p>
+  <figcaption>Relative average speedup of adjoint method over naïve method. Note that the plot shows the ratio of average speeds, rather than an average ratio of speeds.</figcaption>
+</figure>
+
+<p>In general, the adjoint method is as fast or faster than the naïve method,
+fitting the model in roughly 5–10% less time for smaller patient populations,
+and more than 30% less time for on the order of a hundred patients.<sup id="fnref:11" role="doc-noteref"><a href="#fn:11" class="footnote" rel="footnote">12</a></sup></p>
+
+<h2 id="future-directions">Future Directions</h2>
+
+<p>While 30% speedup is substantial, more remains to be done. In addition to the
+<a href="https://en.wikipedia.org/wiki/Powell%27s_dog_leg_method">Powell</a> and
+<a href="https://en.wikipedia.org/wiki/Newton%27s_method">Newton</a> algebraic solvers,
+the Stan math library also has a
+<a href="https://en.wikipedia.org/wiki/Fixed-point_iteration">fixed point solver</a>,
+for which this adjoint method has not yet been implemented. It may also be
+possible to more efficiently use the Jacobians calculated by the Powell and
+Newton solvers themselves.</p>
+
+<p>Lastly, profiling shows that the most expensive portion of the computation
+tends to be the LU decomposition, which is \(O(n^3)\), rather than the matrix
+solves, which are \(O(n^2)\).<sup id="fnref:12" role="doc-noteref"><a href="#fn:12" class="footnote" rel="footnote">13</a></sup> While support for sparse matrices in Stan
+is currently limited, Krylov subspace or other sparse matrix methods could be
+applied in the future in cases, such as the example considered above, where the
+Jacobian of the algebraic system has a sparse structure.</p>
+
+<div class="footnotes" role="doc-endnotes">
+  <ol>
+    <li id="fn:0" role="doc-endnote">
+      <p>Here by implicit functions, we refer exclusively to relations of the form
+\(R(x_1, \ldots, x_n) = 0\) for real variables \(x_1, \ldots, x_n \in
+\mathbb{R}\) and \(R : \mathbb{R}^n \to \mathbb{R}^k\) that are locally
+functions, rather than implicit functions defined on more general Banach
+spaces or in terms of differential operators, which require more care. See,
+e.g.,
+<a href="https://arxiv.org/abs/2112.14217">Efficient Automatic Differentiation of Implicit Functions</a>
+for more information. <a href="#fnref:0" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:1" role="doc-endnote">
+      <p>Thanks to Charles Margossian for initially sharing <a href="https://charlesm93.github.io/files/2018-Margossian.pdf">this
+example</a> with me,
+as well as for a number of helpful suggestions and corrections on this blog
+post. <a href="#fnref:1" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:2" role="doc-endnote">
+      <p>We refer to such an \(f\) as the “algebraic system function” and to
+\(f(x, y) = 0\) as the “algebraic system” that we are trying to solve. <a href="#fnref:2" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:3" role="doc-endnote">
+      <p>That is, our algebraic system function is \(f(x, y) = x^2 + y^2 - (x^2 +
+y^2 - 2x)^2\), and we are interested in the set of \(x\) and \(y\)
+such that \(f(x, y) = 0\). <a href="#fnref:3" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:4" role="doc-endnote">
+      <p>This is the appropriate multivariate analogue of requiring that \( \tfrac
+{\partial f} {\partial y} \neq 0\). <a href="#fnref:4" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:5" role="doc-endnote">
+      <p>We denote the Jacobian of \(f\) by \(\tfrac {\partial f} {\partial
+\mathbf{x}}\). Individual partial derivatives are written \(\tfrac
+{\partial f_i} {\partial x_j}\), gradients \( \tfrac {\partial f_i}
+{\partial \mathbf{x}} \), etc. <a href="#fnref:5" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:6" role="doc-endnote">
+      <p>Even this is not the whole story—strictly speaking, the algebraic solvers
+actually can have local discontinuities because, e.g., the number of Newton
+steps varies. This means that our implementation would need to apply step
+functions to parameters, which can
+<a href="https://mc-stan.org/docs/2_20/functions-reference/step-functions.html">seriously impact sampling</a>,
+since step functions are not themselves differentiable around the “step.” <a href="#fnref:6" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:7" role="doc-endnote">
+      <p>Charles Margossian originally introduced this technique to me, but, e.g.,
+<a href="http://implicit-layers-tutorial.org/implicit_functions/">Kolter, Duvenaud, and Johnson</a>
+had previously proposed it in the autodiff literature. <a href="#fnref:7" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:8" role="doc-endnote">
+      <p>See Chapter 4 of
+<a href="https://epubs.siam.org/doi/book/10.1137/1.9780898717761">Griewank &amp; Walther</a>. <a href="#fnref:8" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:9" role="doc-endnote">
+      <p>This ODE has a closed-form solution which can be derived from the matrix
+exponential. Note that we can write, equivalently,
+\[
+    \mathbf{y}_i’(t) = \begin{bmatrix}
+        - \kappa_{i, \text{cen}}  &amp; 0 \\<br />
+        \kappa_{i, \text{cen}}    &amp; - \kappa_{i, \text{per}}
+    \end{bmatrix} \mathbf{y}_i(t).
+\]
+Note that the matrix factors:
+\begin{align*}
+    \begin{bmatrix}
+      - \kappa_{i, \text{cen}}  &amp; 0 \\<br />
+      \kappa_{i, \text{cen}}    &amp; - \kappa_{i, \text{per}}
+    \end{bmatrix}
+    &amp;= \mathbf{X}^{-1} \mathbf{\Lambda} \mathbf{X} \\<br />
+    &amp;= \begin{bmatrix}
+        1
+          &amp; 0 \\<br />
+        \tfrac {\kappa_{i, \text{cen}}} {\kappa_{i, \text{cen}}-\kappa_{i,
+        \text{per}}}
+          &amp; 1
+      \end{bmatrix} \begin{bmatrix}
+        -\kappa_{i, \text{cen}} &amp; 0 \\<br />
+        0              &amp; -\kappa_{i, \text{per}}
+      \end{bmatrix} \begin{bmatrix}
+        1
+          &amp; 0 \\<br />
+        \tfrac {\kappa_{i, \text{cen}}} {\kappa_{i, \text{per}}-\kappa_{i,
+        \text{cen}}}
+          &amp; 1
+      \end{bmatrix}.
+\end{align*}
+Therefore, the solution is given by
+\begin{align*}
+    \mathbf{y}_i(t)
+    &amp;= \exp \left(t \cdot \begin{bmatrix}
+        - \kappa_{i, \text{cen}}  &amp; 0 \\<br />
+        \kappa_{i, \text{cen}}    &amp; - \kappa_{i, \text{per}}
+      \end{bmatrix} \right) \mathbf{y}_i(0) \\<br />
+    &amp;= [\, \mathbf{X}^{-1} \exp(t \mathbf{\Lambda}) \mathbf{X} \,] \,
+      \mathbf{y}_i(0) \\<br />
+    &amp;= \begin{bmatrix}
+      \exp(-\kappa_{i, \text{cen}}t)
+        &amp; 0 \\<br />
+      \tfrac {\kappa_{i, \text{cen}}} {\kappa_{i, \text{per}} -
+      \kappa_{i, \text{cen}}} \cdot (\exp(-\kappa_{i, \text{cen}}t) -
+      \exp(-k_{i, \text{per}}t))
+        &amp; \exp(-\kappa_{i,\text{per}}t)
+    \end{bmatrix} \mathbf{y}_i(0),
+\end{align*}
+which is what is used in the Stan model, although we could have used the
+numerical ODE solver.</p>
+
+      <p>We can also use this closed form solution to explicitly calculate fixed
+points given \(\kappa_{i, \text{cen}}\), \(\kappa_{i, \text{per}}\),
+\(\delta\), and \(\tau\). In particular, straightforward algebraic
+manipulation yields that the steady state (at time \(\tau\) after a dose
+\(\delta\)) is
+  \begin{align*}
+    y_{i, \text{cen}}
+      &amp;= \frac \delta {1 - \exp(-\kappa_{i, \text{cen}} \cdot \tau)}, \\<br />
+    y_{i, \text{per}}
+      &amp;= y_{i, \text{cen}} \cdot \frac {\kappa_{i, \text{cen}}}
+        {\kappa_{i, \text{per}} - \kappa_{i, \text{cen}}} \cdot
+        \exp(-\kappa_{i, \text{cen}} \cdot \tau) - \frac {\exp(-\kappa_{i,
+        \text{per}} \cdot \tau)} {1 - \exp(-\kappa_{i, \text{per}} \cdot
+        \tau)}.
+  \end{align*}
+This expression is needed to simulate fake data. <a href="#fnref:9" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:10" role="doc-endnote">
+      <p>That is, we use
+<a href="https://github.com/stan-dev/math/commit/74c53543ac195c23cf843a2c7ad3e220e6802ce6">commit 74c5354</a>,
+which introduced the adjoint algorithm and
+<a href="https://github.com/stan-dev/math/commit/cfb93f58f68d23cededa7c22420be3d18a65c233">commit cfb93f5</a>,
+which immediately preceded it. Note that due to technical limitations, the
+actual implementation in Stan differs from the algorithms as written in
+minor ways (for instance, in the adjoint method, using reverse-mode rather
+than forward-mode to calculate the Jacobian and adding a small amount of
+memory-management–related overhead). <a href="#fnref:10" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:11" role="doc-endnote">
+      <p>The fact that it appears to be slightly slower for on the order of 30
+parameters is likely an artifact of the memory-management–related overhead
+currently necessary to implement the adjoint method in Stan. This overhead
+will be removed in the future. <a href="#fnref:11" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:12" role="doc-endnote">
+      <p>That is, the most expensive portion of the computation outside of
+evaluating the algebraic system itself, which can be arbitrarily expensive. <a href="#fnref:12" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+  </ol>
+</div>]]></content><author><name>Johann D. Gaebler</name></author><summary type="html"><![CDATA[One of the things that makes Stan powerful is that—in addition to a large library of standard mathematical functions (e.g., \(\exp(x)\), \(x^y\), \(x + y\), \(\Gamma(x)\), etc.)—it also supports the use of higher-order functions, such as such as solving a user-specified system of ODEs. This greatly expands the range of Bayesian models Stan can handle.]]></summary><media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="https://www.jgaeb.com/assets/images/implicit-autodiff-cover.png" /><media:content medium="image" url="https://www.jgaeb.com/assets/images/implicit-autodiff-cover.png" xmlns:media="http://search.yahoo.com/mrss/" /></entry></feed>

@@ -1,0 +1,132 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>An Adaptive State Aggregation Algorithm for Markov Decision Processes</title>
+    <link rel="stylesheet" href="/assets/css/styles.css?v=3">
+
+    <!-- Add MathJax Latex Support -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Add Custom Javascript -->
+    
+
+    <link type="application/atom+xml" rel="alternate" href="https://www.jgaeb.com/feed.xml" title="Jgaeb" />
+
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>An Adaptive State Aggregation Algorithm for Markov Decision Processes | Jgaeb</title>
+<meta name="generator" content="Jekyll v4.3.2" />
+<meta property="og:title" content="An Adaptive State Aggregation Algorithm for Markov Decision Processes" />
+<meta name="author" content="Guanting Chen" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Value iteration is a well-known method of solving Markov Decision Processes (MDPs) that is simple to implement and boasts strong theoretical convergence guarantees. However, the computational cost of value iteration quickly becomes infeasible as the size of the state space increases. Various methods have been proposed to overcome this issue for value iteration in large state and action space MDPs, often at the price, however, of generalizability and algorithmic simplicity. In this paper, we propose an intuitive algorithm for solving MDPs that reduces the cost of value iteration updates by dynamically grouping together states with similar cost-to-go values. We also prove that our algorithm converges almost surely to within \(2\varepsilon / (1 - \gamma)\) of the true optimal value in the \(\ell^\infty\) norm, where \(\gamma\) is the discount factor and aggregated states differ by at most \(\varepsilon\). Numerical experiments on a variety of simulated environments confirm the robustness of our algorithm and its ability to solve MDPs with much cheaper updates especially as the scale of the MDP problem increases." />
+<meta property="og:description" content="Value iteration is a well-known method of solving Markov Decision Processes (MDPs) that is simple to implement and boasts strong theoretical convergence guarantees. However, the computational cost of value iteration quickly becomes infeasible as the size of the state space increases. Various methods have been proposed to overcome this issue for value iteration in large state and action space MDPs, often at the price, however, of generalizability and algorithmic simplicity. In this paper, we propose an intuitive algorithm for solving MDPs that reduces the cost of value iteration updates by dynamically grouping together states with similar cost-to-go values. We also prove that our algorithm converges almost surely to within \(2\varepsilon / (1 - \gamma)\) of the true optimal value in the \(\ell^\infty\) norm, where \(\gamma\) is the discount factor and aggregated states differ by at most \(\varepsilon\). Numerical experiments on a variety of simulated environments confirm the robustness of our algorithm and its ability to solve MDPs with much cheaper updates especially as the scale of the MDP problem increases." />
+<link rel="canonical" href="https://www.jgaeb.com/papers/adaptive-mdp.html" />
+<meta property="og:url" content="https://www.jgaeb.com/papers/adaptive-mdp.html" />
+<meta property="og:site_name" content="Jgaeb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2025-08-19T22:11:34+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="An Adaptive State Aggregation Algorithm for Markov Decision Processes" />
+<meta name="twitter:site" content="@jgaeb1" />
+<meta name="twitter:creator" content="@Guanting Chen" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Guanting Chen"},"dateModified":"2025-08-19T22:11:34+00:00","datePublished":"2025-08-19T22:11:34+00:00","description":"Value iteration is a well-known method of solving Markov Decision Processes (MDPs) that is simple to implement and boasts strong theoretical convergence guarantees. However, the computational cost of value iteration quickly becomes infeasible as the size of the state space increases. Various methods have been proposed to overcome this issue for value iteration in large state and action space MDPs, often at the price, however, of generalizability and algorithmic simplicity. In this paper, we propose an intuitive algorithm for solving MDPs that reduces the cost of value iteration updates by dynamically grouping together states with similar cost-to-go values. We also prove that our algorithm converges almost surely to within \\(2\\varepsilon / (1 - \\gamma)\\) of the true optimal value in the \\(\\ell^\\infty\\) norm, where \\(\\gamma\\) is the discount factor and aggregated states differ by at most \\(\\varepsilon\\). Numerical experiments on a variety of simulated environments confirm the robustness of our algorithm and its ability to solve MDPs with much cheaper updates especially as the scale of the MDP problem increases.","headline":"An Adaptive State Aggregation Algorithm for Markov Decision Processes","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.jgaeb.com/papers/adaptive-mdp.html"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://www.jgaeb.com/assets/img/headshot.png"},"name":"Guanting Chen"},"url":"https://www.jgaeb.com/papers/adaptive-mdp.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+  </head>
+  <body>
+    <header>
+      <h1>Johann D. Gaebler</h1>
+      <p class="contact-info"><a href="mailto:me@jgaeb.com">Email</a> • <a href="https://github.com/jgaeb">GitHub</a> • <a href="https://twitter.com/jgaeb1">Twitter</a></contact>
+    </header>
+    <nav>
+      <div class="wrapper-nav-items">
+
+  <div class="nav-item-container">
+    <a href="/" >
+      Home
+    </a>
+  </div>
+
+  <div class="nav-item-container">
+    <a href="/about.html" >
+      About
+    </a>
+  </div>
+
+  <div class="nav-item-container">
+    <a href="/research.html" >
+      Research
+    </a>
+  </div>
+
+  <div class="nav-item-container">
+    <a href="/blog.html" >
+      Blog
+    </a>
+  </div>
+
+</div>
+
+    </nav>
+    <main>
+      <article class="paper">
+  <section>
+    <h1>An Adaptive State Aggregation Algorithm for Markov Decision Processes</h1>
+    <p class="authors">Guanting Chen, Johann D. Gaebler, Matt Peng, Chunlin Sun, and Yinyu Ye</p>
+    <p class="biblio">
+      Submitted,
+      2021.
+    </p>
+
+    
+
+    
+    <p class="biblio">
+      ArXiv: <a href="https://arxiv.org/abs/2107.11053">2107.11053</a>.
+    </p>
+    
+
+    
+
+    
+
+    <h2>Abstract</h2>
+    <p>Value iteration is a well-known method of solving Markov Decision Processes
+(MDPs) that is simple to implement and boasts strong theoretical convergence
+guarantees. However, the computational cost of value iteration quickly becomes
+infeasible as the size of the state space increases. Various methods have been
+proposed to overcome this issue for value iteration in large state and action
+space MDPs, often at the price, however, of generalizability and algorithmic
+simplicity. In this paper, we propose an intuitive algorithm for solving MDPs
+that reduces the cost of value iteration updates by dynamically grouping
+together states with similar cost-to-go values. We also prove that our
+algorithm converges almost surely to within \(2\varepsilon / (1 - \gamma)\) of
+the true optimal value in the \(\ell^\infty\) norm, where \(\gamma\) is the
+discount factor and aggregated states differ by at most \(\varepsilon\).
+Numerical experiments on a variety of simulated environments confirm the
+robustness of our algorithm and its ability to solve MDPs with much cheaper
+updates especially as the scale of the MDP problem increases.</p>
+
+  </section>
+
+  <section>
+    
+
+    
+  </section>
+</article>
+
+    </main>
+    <footer>
+  
+  <p>
+    &copy; 2021–2025 Johann D. Gaebler.
+    Last updated August 19, 2025.
+  </p>
+</footer>
+
+  </body>
+</html>

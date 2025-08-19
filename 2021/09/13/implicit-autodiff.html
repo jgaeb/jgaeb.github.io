@@ -1,0 +1,681 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Autodiff for Implicit Functions in Stan</title>
+    <link rel="stylesheet" href="/assets/css/styles.css?v=3">
+
+    <!-- Add MathJax Latex Support -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Add Custom Javascript -->
+    
+      <script type="text/javascript" src="/assets/js/post.js"></script>
+    
+
+    <link type="application/atom+xml" rel="alternate" href="https://www.jgaeb.com/feed.xml" title="Jgaeb" />
+
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Autodiff for Implicit Functions in Stan | Jgaeb</title>
+<meta name="generator" content="Jekyll v4.3.2" />
+<meta property="og:title" content="Autodiff for Implicit Functions in Stan" />
+<meta name="author" content="Johann D. Gaebler" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="One of the things that makes Stan powerful is that—in addition to a large library of standard mathematical functions (e.g., \(\exp(x)\), \(x^y\), \(x + y\), \(\Gamma(x)\), etc.)—it also supports the use of higher-order functions, such as such as solving a user-specified system of ODEs. This greatly expands the range of Bayesian models Stan can handle." />
+<meta property="og:description" content="One of the things that makes Stan powerful is that—in addition to a large library of standard mathematical functions (e.g., \(\exp(x)\), \(x^y\), \(x + y\), \(\Gamma(x)\), etc.)—it also supports the use of higher-order functions, such as such as solving a user-specified system of ODEs. This greatly expands the range of Bayesian models Stan can handle." />
+<link rel="canonical" href="https://www.jgaeb.com/2021/09/13/implicit-autodiff.html" />
+<meta property="og:url" content="https://www.jgaeb.com/2021/09/13/implicit-autodiff.html" />
+<meta property="og:site_name" content="Jgaeb" />
+<meta property="og:image" content="https://www.jgaeb.com/assets/images/implicit-autodiff-cover.png" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-09-13T00:00:00+00:00" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta property="twitter:image" content="https://www.jgaeb.com/assets/images/implicit-autodiff-cover.png" />
+<meta property="twitter:title" content="Autodiff for Implicit Functions in Stan" />
+<meta name="twitter:site" content="@jgaeb1" />
+<meta name="twitter:creator" content="@Johann D. Gaebler" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Johann D. Gaebler"},"dateModified":"2021-09-13T00:00:00+00:00","datePublished":"2021-09-13T00:00:00+00:00","description":"One of the things that makes Stan powerful is that—in addition to a large library of standard mathematical functions (e.g., \\(\\exp(x)\\), \\(x^y\\), \\(x + y\\), \\(\\Gamma(x)\\), etc.)—it also supports the use of higher-order functions, such as such as solving a user-specified system of ODEs. This greatly expands the range of Bayesian models Stan can handle.","headline":"Autodiff for Implicit Functions in Stan","image":"https://www.jgaeb.com/assets/images/implicit-autodiff-cover.png","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.jgaeb.com/2021/09/13/implicit-autodiff.html"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://www.jgaeb.com/assets/img/headshot.png"},"name":"Johann D. Gaebler"},"url":"https://www.jgaeb.com/2021/09/13/implicit-autodiff.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+  </head>
+  <body>
+    <header>
+      <h1>Johann D. Gaebler</h1>
+      <p class="contact-info"><a href="mailto:me@jgaeb.com">Email</a> • <a href="https://github.com/jgaeb">GitHub</a> • <a href="https://twitter.com/jgaeb1">Twitter</a></contact>
+    </header>
+    <nav>
+      <div class="wrapper-nav-items">
+
+  <div class="nav-item-container">
+    <a href="/" >
+      Home
+    </a>
+  </div>
+
+  <div class="nav-item-container">
+    <a href="/about.html" >
+      About
+    </a>
+  </div>
+
+  <div class="nav-item-container">
+    <a href="/research.html" >
+      Research
+    </a>
+  </div>
+
+  <div class="nav-item-container">
+    <a href="/blog.html" >
+      Blog
+    </a>
+  </div>
+
+</div>
+
+    </nav>
+    <main>
+      <article class="blog">
+  <div class="title">
+    <h1>Autodiff for Implicit Functions in Stan</h1>
+    
+      <h2>Fast derivatives for functions you can't write down</h2>
+    
+  </div>
+  <p class="date">September 13th, 2021</p>
+  <p class="rep-materials">
+    
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+        <a href="https://github.com/jgaeb/jgaeb.github.io/tree/main/assets/posts/implicit-autodiff">Post replication materials</a>
+        
+  </p>
+
+  
+    <figure class="cover">
+      
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          
+          
+      
+      <img src="/assets/images/implicit-autodiff-cover.svg" alt="Implicit curve as a level curve.">
+      
+        <figcaption>
+          Image:
+          <a href="https://commons.wikimedia.org/wiki/File:Fl-sin-cos-nivk-s.svg">Ag2gaeh via Wikimedia</a>
+        </figcaption>
+      
+    </figure>
+
+
+  <p>One of the things that makes <a href="https://mc-stan.org">Stan</a> powerful is that—in
+addition to a large library of standard mathematical functions (e.g.,
+\(\exp(x)\), \(x^y\), \(x + y\), \(\Gamma(x)\), etc.)—it also supports
+the use of higher-order functions, such as such as solving a user-specified
+system of ODEs. This greatly expands the range of Bayesian models Stan can
+handle.</p>
+
+<p>One such higher-order function is Stan’s
+<a href="https://mc-stan.org/docs/2_27/stan-users-guide/algebra-solver-chapter.html">algebra solver</a>,
+which is useful for building models that require <a href="https://en.wikipedia.org/wiki/Implicit_function">implicit
+functions</a>.<sup id="fnref:0" role="doc-noteref"><a href="#fn:0" class="footnote" rel="footnote">1</a></sup> Implicit
+functions show up often when one is looking for “steady states.” For instance,
+in <a href="https://en.wikipedia.org/wiki/Pharmacokinetics">pharmacokinetics</a>, one
+often wants to know how much of a drug will build up in a patient’s body if
+they take a fixed dose at regular intervals. If the patient takes a doses of
+size \(\delta\) at intervals of length \(\tau\), then we’re looking for the
+dose \(x_0\) such that \(f(x_0 + \delta, \tau) = x_0\), where \(f(x, t)\)
+is the concentration of the drug in the patient’s body at time \(t\) if the
+concentration at time \(0\) was \(x\).<sup id="fnref:1" role="doc-noteref"><a href="#fn:1" class="footnote" rel="footnote">2</a></sup></p>
+
+<p>The challenge with higher-order functions is finding a way to efficiently
+implement
+<a href="https://en.wikipedia.org/wiki/Automatic_differentiation">automatic differentiation</a>
+for them. The <a href="https://en.wikipedia.org/wiki/Hamiltonian_Monte_Carlo">HMC</a>
+sampler repeatedly differentiates the density of the distribution from which
+we’re sampling. If our model involves, for example, the solution to an ODE,
+then we have differentiate the solution with respect to the inputs, even though
+the “solution” itself is the result of numerical integration and not
+necessarily something we can write down in closed form. This requires some
+cleverness. The algebra solver presents a similar challenge, as typically we
+cannot write down \(x\) as a closed-form function of \(\delta\) and
+\(\tau\) when all we know is the dependence \(f(x + \delta, \tau) = x\).
+Over the past few months, I’ve been working to help Stan calculate these
+derivatives more efficiently.</p>
+
+<h2 id="implicit-functions">Implicit Functions</h2>
+
+<p>The easiest way to think about the algebraic solvers is through the
+<a href="https://en.wikipedia.org/wiki/Implicit_function_theorem">implicit function theorem</a>.
+The implicit function theorem states that if we have an equation of the form
+\(f(x, y) = 0\),<sup id="fnref:2" role="doc-noteref"><a href="#fn:2" class="footnote" rel="footnote">3</a></sup> and \(f\) is reasonably well-behaved, then, given a
+solution \((x_0, y_0)\), we can find a function \(g\) such that \((x,
+g(x))\) is a solution—i.e., \(f(x, g(x)) = 0\)—for all \(x\) in some
+neighborhood around \(x_0\). The function \(g(x)\), which “traces out”
+solutions to \(f(x, y) = 0\) as a function of \(x\), is our implicit
+function. There is an obstacle to \(g(x)\)’s existence: at least locally,
+there needs to be only a single value of \(y\) corresponding to each \(x\)
+such that \(f(x, y) = 0\). This will fail if the curve of solutions doubles
+back on itself, which, in turn can only happen where \( \tfrac {\text{d} y}
+{\text{d} x} \to \infty\). So, to get an implicit function \(g(x)\) in a
+neighborhood of \(x_0\), we need that \( \tfrac {\text{d} y} {\text{d} x}
+\) is not infinite, or, what comes to the same thing, that the derivative \(
+\tfrac {\partial f} {\partial y} \) exists and is non-zero at the solution
+\((x_0, y_0)\).</p>
+
+<figure>
+<p><img src="/assets/posts/implicit-autodiff/limacon.svg" alt="An implicitly defined limaçon trisectrix." /></p>
+  <figcaption>An implicitly defined limaçon trisectrix, given by \(x^2 + y^2 = (x^2 + y^2 - 2x)^2\).</figcaption>
+</figure>
+
+<p>This figure illustrates a
+<a href="https://en.wikipedia.org/wiki/Limaçon_trisectrix">limaçon trisectrix</a>,
+defined implicitly by \(x^2 + y^2 = (x^2 + y^2 - 2x)^2\).<sup id="fnref:3" role="doc-noteref"><a href="#fn:3" class="footnote" rel="footnote">4</a></sup> The variable
+\(y\) is a continuously differentiable function of \(x\) locally near the
+blue line, but not the red, where \( \tfrac {\partial f} {\partial y} = 0 \).</p>
+
+<p>More formally, the implicit function theorem states that if \(f :
+\mathbb{R}^{n+m} \to \mathbb{R}^m\) is continuously differentiable,
+\(\mathbf{x}_0 \in \mathbb{R}^n\), \(\mathbf{y}_0 \in \mathbb{R}^m\), and
+\(f(\mathbf{x}_0, \mathbf{y}_0) = 0\), and \(\tfrac {\partial f} {\partial
+\mathbf{y}} \upharpoonright_{\mathbf{y} = \mathbf{y}_0} \) is invertible,<sup id="fnref:4" role="doc-noteref"><a href="#fn:4" class="footnote" rel="footnote">5</a></sup>
+then there is an (implicit) function \(g : \mathbb{R}^n \to \mathbb{R}^m \)
+defined locally around \(\mathbf{x}_0\) such that \(f(\mathbf{x},
+g(\mathbf{x})) = 0\). What’s more, it follows directly from differentiating
+\(f(\mathbf{x}, g(\mathbf{x})) = 0\) that<sup id="fnref:5" role="doc-noteref"><a href="#fn:5" class="footnote" rel="footnote">6</a></sup>
+  \[
+    \frac {\partial g} {\partial \mathbf{x}} = - \left[ \frac {\partial f}
+    {\partial \mathbf{y}} \upharpoonright_{\mathbf{y} = g(\mathbf{x})}
+    \right]^{-1} \frac {\partial f} {\partial \mathbf{x}}.
+  \]</p>
+
+<p>This is the key point that makes it possible to use autodiff on implicit
+functions. The implicit function theorem doesn’t tell us how to calculate the
+function \(g(\mathbf{x})\)—that’s what the algebra solvers are for—but it
+<em>does</em>  allows us to back out the gradient of \(g\) using <em>only known
+quantities:</em> the solution, \((\mathbf{x}, g(\mathbf{x}))\), and the algebraic
+system function, \(f(\mathbf{x}, \mathbf{y})\). (One could, in principle,
+implement the algebra solver itself on the autodiff stack and try to extract
+the gradient that way, but that would be impracticably slow.<sup id="fnref:6" role="doc-noteref"><a href="#fn:6" class="footnote" rel="footnote">7</a></sup>)</p>
+
+<h2 id="two-algorithms">Two Algorithms</h2>
+
+<p>The implicit function theorem makes autodiff using implicit functions
+<em>possible.</em> But the real question is, how <em>fast</em> can we make it?</p>
+
+<p>If you’re unfamiliar with autodiff, there are some
+<a href="https://arxiv.org/pdf/1811.05031">great</a>
+<a href="https://arxiv.org/abs/1502.05767">overviews</a> (and
+<a href="https://epubs.siam.org/doi/book/10.1137/1.9780898717761">reference texts</a>).
+Here, it is enough to understand that to make reverse-mode autodiff work, all
+we need to know is, for each “atomic function” \(f : \mathbb{R}^n \to
+\mathbb{R}^m \) that shows up in our model (e.g., \(\cos(x)\) or \(x + y\)
+or an implicit function calculated using the algebraic solver), how to
+calculate the product \(\boldsymbol{\xi} \tfrac {\partial f} {\partial
+\mathbf{x}}\), where \(\boldsymbol{\xi}\) is a size \(m\) row vector or
+“cotangent.”</p>
+
+<p>In the case of an implicit function \(g(\mathbf{x})\), the implicit function
+theorem above suggests an obvious way to do this.</p>
+
+<h3 id="algorithm-1-the-naïve-method">Algorithm 1: The Naïve Method</h3>
+
+<p><em>Data:</em> The algebraic system function \(f(\mathbf{x}, \mathbf{y})\), a
+solution \((\mathbf{x}_0, \mathbf{y}_0)\), and an initial cotangent
+\(\boldsymbol{\xi}\).</p>
+
+<p><em>Result:</em> The adjoint of the implicit function \(\mathbf{x} \mapsto
+\mathbf{y}\) with respect to the initial cotangent \(\boldsymbol{\xi}\)
+evaluated at \( \mathbf{x}_0 \), i.e., the product \(
+\boldsymbol{\xi}_{\operatorname{out}} = \boldsymbol{\xi} \left[ \tfrac
+{\partial \mathbf{y}} {\partial \mathbf{x}} \upharpoonright_{\mathbf{x}_0}
+\right] \).</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">For</code> \(i = 1, \ldots, n\)
+    <ul>
+      <li>Calculate \(\tfrac {\partial f} {\partial x_i}\). <em>(One forward-mode
+pass.)</em></li>
+    </ul>
+  </li>
+  <li><code class="language-plaintext highlighter-rouge">For</code> \(i = 1, \ldots, m\)
+    <ul>
+      <li>Calculate \(\tfrac {\partial f} {\partial y_i}\). <em>(One forward-mode pass.)</em></li>
+    </ul>
+  </li>
+  <li>Calculate the LU-decomposition of \(\tfrac {\partial f} {\partial \mathbf{y}}\).</li>
+  <li><code class="language-plaintext highlighter-rouge">For</code> \(i = 1, \ldots, n\)
+    <ul>
+      <li>Calculate \(\tfrac {\partial \mathbf{y}} {\partial x_i} = \left[ \tfrac
+{\partial f} {\partial \mathbf{y}} \right]^{-1} \frac {\partial f}
+{\partial x_i}\). <em>(One matrix solve.)</em></li>
+    </ul>
+  </li>
+  <li>Calculate \(\boldsymbol{\xi}_{\text{out}} = \boldsymbol{\xi}
+\tfrac {\partial \mathbf{y}} {\partial \mathbf{x}}\). <em>(One matrix
+multiplication.)</em></li>
+  <li><code class="language-plaintext highlighter-rouge">Return</code> \(\boldsymbol{\xi}_{\operatorname{out}}\).</li>
+</ol>
+
+<p>Inverting \(\tfrac {\partial f} {\partial \mathbf{y}}\) is quite expensive: in
+addition to an LU-decomposition, it also requires \(n\) matrix solves and
+\(n\) forward-mode autodiff passes.</p>
+
+<p>However, if we’re slightly more clever, we can avoid much of the expense of the
+matrix inversion, and reduce the number of autodiff passes.<sup id="fnref:7" role="doc-noteref"><a href="#fn:7" class="footnote" rel="footnote">8</a></sup></p>
+
+<h3 id="algorithm-2-the-adjoint-method">Algorithm 2: The Adjoint Method</h3>
+
+<p><em>Data:</em> The algebraic system function \(f(\mathbf{x}, \mathbf{y})\), a
+solution \((\mathbf{x}_0, \mathbf{y}_0)\), and an initial cotangent
+\(\boldsymbol{\xi}\).</p>
+
+<p><em>Result:</em> The adjoint of the implicit function \(\mathbf{x} \mapsto
+\mathbf{y}\) with respect to the initial cotangent \(\boldsymbol{\xi}\)
+evaluated at \( \mathbf{x}_0 \), i.e., the product \(
+\boldsymbol{\xi}_{\operatorname{out}} = \boldsymbol{\xi} \left[ \tfrac
+{\partial \mathbf{y}} {\partial \mathbf{x}} \upharpoonright_{\mathbf{x}_0}
+\right] \).</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">For</code> \(i = 1, \ldots, m\)
+    <ul>
+      <li>Calculate \(\tfrac {\partial f} {\partial y_i}\). <em>(One forward-mode pass.)</em></li>
+    </ul>
+  </li>
+  <li>Calculate the LU-decomposition of \(\tfrac {\partial f} {\partial \mathbf{y}}\).</li>
+  <li>Calculate \(\boldsymbol{\eta} = \boldsymbol{\xi} \left[ \frac {\partial f}
+{\partial \mathbf{y}} \right]^{-1} \). <em>(One matrix solve.)</em></li>
+  <li>Calculate \(\boldsymbol{\xi}_{\text{out}} = \boldsymbol{\eta}
+ \tfrac {\partial f} {\partial \mathbf{x}}\). <em>(One reverse-mode pass.)</em></li>
+  <li><code class="language-plaintext highlighter-rouge">Return</code> \(\boldsymbol{\xi}_{\operatorname{out}}\).</li>
+</ol>
+
+<p>Algorithm 2, by way of contrast, replaces the \(n\) forward-mode passes and
+matrix solves with a single reverse-mode pass. Since each autodiff pass requires
+(roughly) the same number of operations as calculating the value of a function
+itself,<sup id="fnref:8" role="doc-noteref"><a href="#fn:8" class="footnote" rel="footnote">9</a></sup> the savings are significant.</p>
+
+<h2 id="testing-it-out-an-example-from-pharmacology">Testing it Out: An Example from Pharmacology</h2>
+
+<p>To test out the two algorithms, we borrow a simple example from pharmacology.
+We consider a two-compartment model. Patient \(i\) consumes a dose
+\(\delta\) of a drug at intervals of length \(\tau\). The concentration of
+the drug in the central and peripheral compartments of patient \(i\)
+satisfies the ODE<sup id="fnref:9" role="doc-noteref"><a href="#fn:9" class="footnote" rel="footnote">10</a></sup>
+  \begin{align*}
+    y_{i, \text{cen}}’(t) &amp;= -\kappa_{i, \text{cen}} \cdot y_{i,
+      \text{cen}}(t), \\<br />
+    y_{i, \text{per}}’(t) &amp;= \kappa_{i, \text{cen}} \cdot y_{i, \text{cen}}(t)
+      - \kappa_{i, \text{per}} \cdot y_{i, \text{per}}(t),
+  \end{align*}
+where \(t\) is the time since the last dose. The patient is at a “steady
+state” when
+  \begin{align*}
+    y_{i, \text{cen}}(0) - y_{i, \text{cen}}(\tau) &amp;= \delta, \\<br />
+    y_{i, \text{per}}(0) - y_{i, \text{per}}(\tau) &amp;= 0.
+  \end{align*}
+Measurements are taken of concentration in the main compartment for each
+patient at steady state.  Measurement \(m_{i, k}\) taken at time \(t_{i,
+k}\) after the last dose satisfies
+  \[
+    \log(m_{i, k}) \sim \mathcal{N} \left( \log(y_{\text{per}}(t_{i, k})),
+    \tfrac 1 4 \right).
+  \]</p>
+
+<p>To complete the model, we put priors on \(\kappa_{i, \text{cen}}\) and
+\(\kappa_{i, \text{per}}\). In particular, our prior is that they are i.i.d.
+lognormal random variables, i.e.,
+  \[
+    \log(\kappa_{i, j}) \sim \mathcal{N} \left( 0, \tfrac 1 4 \right),
+  \]
+for \(j \in \{ \text{cen}, \text{per} \}\).</p>
+
+<h3 id="stan-implementation-and-results">Stan Implementation and Results</h3>
+
+<p>It’s straightforward to represent the pharmacological model above directly in
+Stan.</p>
+
+<figure class="highlight"><pre><code class="language-stan" data-lang="stan"><span class="nn">functions</span> <span class="p">{</span>
+  <span class="cm">/* Solution to drug concentration ODE given inital concentration, time elapsed,
+   * and diffusion parameters.
+   */</span>
+  <span class="kt">vector</span><span class="p">[]</span> <span class="nf">drug_conc</span><span class="p">(</span><span class="kt">vector</span> <span class="nv">y_cen</span><span class="p">,</span> <span class="kt">vector</span> <span class="nv">y_per</span><span class="p">,</span> <span class="kt">vector</span> <span class="nv">kappa_cen</span><span class="p">,</span>
+                     <span class="kt">vector</span> <span class="nv">kappa_per</span><span class="p">,</span> <span class="kt">vector</span> <span class="nv">ts</span><span class="p">,</span> <span class="kt">int</span> <span class="nv">N</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">vector</span><span class="p">[</span><span class="nv">N</span><span class="p">]</span> <span class="nv">y_cen_out</span> <span class="o">=</span> <span class="nb">exp</span><span class="p">(</span><span class="o">-</span><span class="nv">kappa_cen</span> <span class="o">.*</span> <span class="nv">ts</span><span class="p">)</span> <span class="o">.*</span> <span class="nv">y_cen</span><span class="p">;</span>
+    <span class="kt">vector</span><span class="p">[</span><span class="nv">N</span><span class="p">]</span> <span class="nv">y_per_out</span> <span class="o">=</span> <span class="p">(</span><span class="nv">kappa_cen</span> <span class="o">./</span> <span class="p">(</span><span class="nv">kappa_per</span> <span class="o">-</span> <span class="nv">kappa_cen</span><span class="p">))</span>
+                            <span class="o">.*</span> <span class="p">(</span><span class="nb">exp</span><span class="p">(</span><span class="o">-</span><span class="nv">kappa_cen</span> <span class="o">.*</span> <span class="nv">ts</span><span class="p">)</span> <span class="o">-</span> <span class="nb">exp</span><span class="p">(</span><span class="o">-</span><span class="nv">kappa_per</span> <span class="o">.*</span> <span class="nv">ts</span><span class="p">))</span>
+                            <span class="o">.*</span> <span class="nv">y_cen</span> <span class="o">+</span> <span class="nb">exp</span><span class="p">(</span><span class="o">-</span><span class="nv">kappa_per</span> <span class="o">.*</span> <span class="nv">ts</span><span class="p">)</span> <span class="o">.*</span> <span class="nv">y_per</span><span class="p">;</span>
+
+    <span class="k">return</span> <span class="p">{</span> <span class="nv">y_cen_out</span><span class="p">,</span> <span class="nv">y_per_out</span> <span class="p">};</span>
+  <span class="p">}</span>
+
+  <span class="c1">// Functor with appropriate signature for algebraic solver.</span>
+  <span class="kt">vector</span> <span class="nf">f</span><span class="p">(</span><span class="kt">vector</span> <span class="nv">y</span><span class="p">,</span> <span class="kt">vector</span> <span class="nv">kappas</span><span class="p">,</span> <span class="kt">real</span><span class="p">[]</span> <span class="nv">x_r</span><span class="p">,</span> <span class="kt">int</span><span class="p">[]</span> <span class="nv">x_i</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// Unpack x_r.</span>
+    <span class="kt">real</span> <span class="nv">delta</span> <span class="o">=</span> <span class="nv">x_r</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+    <span class="kt">real</span> <span class="nv">tau</span> <span class="o">=</span> <span class="nv">x_r</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+
+    <span class="c1">// Unpack x_i.</span>
+    <span class="kt">int</span> <span class="nv">n</span> <span class="o">=</span> <span class="nv">x_i</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+
+    <span class="c1">// All of the intervals are tau.</span>
+    <span class="kt">vector</span><span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="nv">ts</span> <span class="o">=</span> <span class="nb">rep_vector</span><span class="p">(</span><span class="nv">tau</span><span class="p">,</span> <span class="nv">n</span><span class="p">);</span>
+
+    <span class="cm">/* The first n entries of y are the concentrations in the central
+     * compartment, while the last n entries of y are the concentrations in the
+     * peripheral compartments. Likewise for kappa.
+     */</span>
+    <span class="kt">vector</span><span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="nv">y_cen</span> <span class="o">=</span> <span class="nv">y</span><span class="p">[</span><span class="o">:</span><span class="nv">n</span><span class="p">];</span>
+    <span class="kt">vector</span><span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="nv">y_per</span> <span class="o">=</span> <span class="nv">y</span><span class="p">[(</span><span class="nv">n</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">:</span><span class="p">];</span>
+    <span class="kt">vector</span><span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="nv">kappa_cen</span> <span class="o">=</span> <span class="nv">kappas</span><span class="p">[</span><span class="o">:</span><span class="nv">n</span><span class="p">];</span>
+    <span class="kt">vector</span><span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="nv">kappa_per</span> <span class="o">=</span> <span class="nv">kappas</span><span class="p">[(</span><span class="nv">n</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">:</span><span class="p">];</span>
+
+    <span class="c1">// Calculate the concentrations after tau.</span>
+    <span class="kt">vector</span><span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="nv">y_res</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="nf">drug_conc</span><span class="p">(</span><span class="nv">y_cen</span><span class="p">,</span> <span class="nv">y_per</span><span class="p">,</span> <span class="nv">kappa_cen</span><span class="p">,</span> <span class="nv">kappa_per</span><span class="p">,</span> <span class="nv">ts</span><span class="p">,</span> <span class="nv">n</span><span class="p">);</span>
+
+    <span class="cm">/* If a steady state has been reached, the difference between the
+     * concentration after tau (with a dose delta) should be the same as the
+     * current state.
+     */</span>
+    <span class="k">return</span> <span class="nb">append_row</span><span class="p">(</span><span class="nv">y_res</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="nb">rep_vector</span><span class="p">(</span><span class="nv">delta</span><span class="p">,</span> <span class="nv">n</span><span class="p">),</span> <span class="nv">y_res</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">-</span> <span class="nv">y</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nn">data</span> <span class="p">{</span>
+  <span class="kt">real</span><span class="o">&lt;</span><span class="na">lower</span><span class="o">=</span><span class="mi">0</span><span class="o">&gt;</span> <span class="nv">delta</span><span class="p">;</span>              <span class="c1">// Dosage</span>
+  <span class="kt">real</span><span class="o">&lt;</span><span class="na">lower</span><span class="o">=</span><span class="mi">0</span><span class="o">&gt;</span> <span class="nv">tau</span><span class="p">;</span>                <span class="c1">// Dose interval</span>
+  <span class="kt">int</span> <span class="nv">n</span><span class="p">;</span>                            <span class="c1">// Number of patients</span>
+  <span class="kt">int</span> <span class="nv">m</span><span class="p">;</span>                            <span class="c1">// Number of observations</span>
+  <span class="kt">vector</span><span class="o">&lt;</span><span class="na">lower</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="na">upper</span><span class="o">=</span><span class="nv">tau</span><span class="o">&gt;</span><span class="p">[</span><span class="nv">m</span><span class="p">]</span> <span class="nv">ts</span><span class="p">;</span>  <span class="c1">// Times of observations (since last dose)</span>
+  <span class="kt">int</span><span class="o">&lt;</span><span class="na">lower</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="na">upper</span><span class="o">=</span><span class="nv">n</span><span class="o">&gt;</span> <span class="nv">idx</span><span class="p">[</span><span class="nv">m</span><span class="p">];</span>      <span class="c1">// Patient corresponding to observation</span>
+  <span class="kt">vector</span><span class="o">&lt;</span><span class="na">lower</span><span class="o">=</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">[</span><span class="nv">m</span><span class="p">]</span> <span class="nv">obs</span><span class="p">;</span>           <span class="c1">// Observed concetrations</span>
+  <span class="kt">vector</span><span class="o">&lt;</span><span class="na">lower</span><span class="o">=</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="nv">y_guess_cen</span><span class="p">;</span>   <span class="c1">// Guess for central compartment.</span>
+  <span class="kt">vector</span><span class="o">&lt;</span><span class="na">lower</span><span class="o">=</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="nv">y_guess_per</span><span class="p">;</span>   <span class="c1">// Guess for peripheral compartment.</span>
+<span class="p">}</span>
+
+<span class="nn">transformed data</span> <span class="p">{</span>
+  <span class="c1">// Reshape the data for the algebra solver.</span>
+  <span class="kt">vector</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="nv">n</span><span class="p">]</span> <span class="nv">y_guess</span> <span class="o">=</span> <span class="nb">append_row</span><span class="p">(</span><span class="nv">y_guess_cen</span><span class="p">,</span> <span class="nv">y_guess_per</span><span class="p">);</span>
+  <span class="kt">real</span> <span class="nv">x_r</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>         <span class="o">=</span> <span class="p">{</span> <span class="nv">delta</span><span class="p">,</span> <span class="nv">tau</span> <span class="p">};</span>
+  <span class="kt">int</span>  <span class="nv">x_i</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>         <span class="o">=</span> <span class="p">{</span> <span class="nv">n</span> <span class="p">};</span>
+<span class="p">}</span>
+
+<span class="nn">parameters</span> <span class="p">{</span>
+  <span class="kt">vector</span><span class="o">&lt;</span><span class="na">lower</span><span class="o">=</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="nv">kappa_cen</span><span class="p">;</span> <span class="c1">// Dispersion from central compartment</span>
+  <span class="kt">vector</span><span class="o">&lt;</span><span class="na">lower</span><span class="o">=</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="nv">kappa_per</span><span class="p">;</span> <span class="c1">// Dispersion from peripheral compartment</span>
+<span class="p">}</span>
+
+<span class="nn">transformed parameters</span> <span class="p">{</span>
+  <span class="c1">// Reshape dispersion parameters for algebra solver.</span>
+  <span class="kt">vector</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="nv">n</span><span class="p">]</span> <span class="nv">kappas</span> <span class="o">=</span> <span class="nb">append_row</span><span class="p">(</span><span class="nv">kappa_cen</span><span class="p">,</span> <span class="nv">kappa_per</span><span class="p">);</span>
+
+  <span class="c1">// Get the steady-state for each patient.</span>
+  <span class="kt">vector</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="nv">n</span><span class="p">]</span> <span class="nv">y_steady</span> <span class="o">=</span> <span class="nb">algebra_solver</span><span class="p">(</span><span class="nv">f</span><span class="p">,</span> <span class="nv">y_guess</span><span class="p">,</span> <span class="nv">kappas</span><span class="p">,</span> <span class="nv">x_r</span><span class="p">,</span> <span class="nv">x_i</span><span class="p">);</span>
+  <span class="kt">vector</span><span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="nv">y_steady_cen</span> <span class="o">=</span> <span class="nv">y_steady</span><span class="p">[</span><span class="o">:</span><span class="nv">n</span><span class="p">];</span>
+  <span class="kt">vector</span><span class="p">[</span><span class="nv">n</span><span class="p">]</span> <span class="nv">y_steady_per</span> <span class="o">=</span> <span class="nv">y_steady</span><span class="p">[(</span><span class="nv">n</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">:</span><span class="p">];</span>
+
+  <span class="cm">/* Get the concentrations in the central compartment at each time observation,
+   * given the currently sampled diffusion parameters.
+   */</span>
+  <span class="kt">vector</span><span class="p">[</span><span class="nv">m</span><span class="p">]</span> <span class="nv">y_true</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="nf">drug_conc</span><span class="p">(</span><span class="nv">y_steady_cen</span><span class="p">[</span><span class="nv">idx</span><span class="p">],</span> <span class="nv">y_steady_per</span><span class="p">[</span><span class="nv">idx</span><span class="p">],</span>
+                                  <span class="nv">kappa_cen</span><span class="p">[</span><span class="nv">idx</span><span class="p">],</span> <span class="nv">kappa_per</span><span class="p">[</span><span class="nv">idx</span><span class="p">],</span> <span class="nv">ts</span><span class="p">,</span> <span class="nv">m</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="nn">model</span> <span class="p">{</span>
+  <span class="nv">kappa_cen</span> <span class="o">~</span> <span class="nb">lognormal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="mi">4</span><span class="p">);</span>
+  <span class="nv">kappa_per</span> <span class="o">~</span> <span class="nb">lognormal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="mi">4</span><span class="p">);</span>
+  <span class="nv">obs</span> <span class="o">~</span> <span class="nb">lognormal</span><span class="p">(</span><span class="nb">log</span><span class="p">(</span><span class="nv">y_true</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="mf">1.0</span><span class="o">/</span><span class="mi">4</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="nn">generated quantities</span> <span class="p">{</span>
+  <span class="kt">real</span> <span class="nv">fake_obs</span><span class="p">[</span><span class="nv">m</span><span class="p">]</span> <span class="o">=</span> <span class="nb">lognormal_rng</span><span class="p">(</span><span class="nb">log</span><span class="p">(</span><span class="nv">y_true</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="mf">1.0</span><span class="o">/</span><span class="mi">4</span><span class="p">);</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>To test it out, we simulate
+<a href="/assets/posts/implicit-autodiff/fake_data.R">fake data</a> for patient
+populations of a rage of different sizes. For each population size, we generate
+100 fake datasets, each with approximately 100 observations for each patient,
+and then fit the Stan model shown above. We repeat this experiment using both
+the naïve and adjoint algorithms.<sup id="fnref:10" role="doc-noteref"><a href="#fn:10" class="footnote" rel="footnote">11</a></sup> The results are shown below.</p>
+
+<figure>
+<p><img src="/assets/posts/implicit-autodiff/plot_raw.svg" alt="A plot of the raw runtimes of the naïve and adjoint algorithms." class="figure" /></p>
+  <figcaption>Raw runtimes of the naïve and adjoint methods. Runtimes of the adjoint algorithm have been translated to the right for better readability.</figcaption>
+</figure>
+
+<p>As expected, there is a clear speedup as the size of the problem gets larger.
+To better visualize the speedup across all orders of magnitude, we also
+calculate the relative speedup for each problem size.</p>
+
+<figure>
+<p><img src="/assets/posts/implicit-autodiff/plot_quot.svg" alt="A plot of the relative speedup of the adjoint algorithm and new algorithms." class="figure" /></p>
+  <figcaption>Relative average speedup of adjoint method over naïve method. Note that the plot shows the ratio of average speeds, rather than an average ratio of speeds.</figcaption>
+</figure>
+
+<p>In general, the adjoint method is as fast or faster than the naïve method,
+fitting the model in roughly 5–10% less time for smaller patient populations,
+and more than 30% less time for on the order of a hundred patients.<sup id="fnref:11" role="doc-noteref"><a href="#fn:11" class="footnote" rel="footnote">12</a></sup></p>
+
+<h2 id="future-directions">Future Directions</h2>
+
+<p>While 30% speedup is substantial, more remains to be done. In addition to the
+<a href="https://en.wikipedia.org/wiki/Powell%27s_dog_leg_method">Powell</a> and
+<a href="https://en.wikipedia.org/wiki/Newton%27s_method">Newton</a> algebraic solvers,
+the Stan math library also has a
+<a href="https://en.wikipedia.org/wiki/Fixed-point_iteration">fixed point solver</a>,
+for which this adjoint method has not yet been implemented. It may also be
+possible to more efficiently use the Jacobians calculated by the Powell and
+Newton solvers themselves.</p>
+
+<p>Lastly, profiling shows that the most expensive portion of the computation
+tends to be the LU decomposition, which is \(O(n^3)\), rather than the matrix
+solves, which are \(O(n^2)\).<sup id="fnref:12" role="doc-noteref"><a href="#fn:12" class="footnote" rel="footnote">13</a></sup> While support for sparse matrices in Stan
+is currently limited, Krylov subspace or other sparse matrix methods could be
+applied in the future in cases, such as the example considered above, where the
+Jacobian of the algebraic system has a sparse structure.</p>
+
+<div class="footnotes" role="doc-endnotes">
+  <ol>
+    <li id="fn:0" role="doc-endnote">
+      <p>Here by implicit functions, we refer exclusively to relations of the form
+\(R(x_1, \ldots, x_n) = 0\) for real variables \(x_1, \ldots, x_n \in
+\mathbb{R}\) and \(R : \mathbb{R}^n \to \mathbb{R}^k\) that are locally
+functions, rather than implicit functions defined on more general Banach
+spaces or in terms of differential operators, which require more care. See,
+e.g.,
+<a href="https://arxiv.org/abs/2112.14217">Efficient Automatic Differentiation of Implicit Functions</a>
+for more information. <a href="#fnref:0" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:1" role="doc-endnote">
+      <p>Thanks to Charles Margossian for initially sharing <a href="https://charlesm93.github.io/files/2018-Margossian.pdf">this
+example</a> with me,
+as well as for a number of helpful suggestions and corrections on this blog
+post. <a href="#fnref:1" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:2" role="doc-endnote">
+      <p>We refer to such an \(f\) as the “algebraic system function” and to
+\(f(x, y) = 0\) as the “algebraic system” that we are trying to solve. <a href="#fnref:2" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:3" role="doc-endnote">
+      <p>That is, our algebraic system function is \(f(x, y) = x^2 + y^2 - (x^2 +
+y^2 - 2x)^2\), and we are interested in the set of \(x\) and \(y\)
+such that \(f(x, y) = 0\). <a href="#fnref:3" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:4" role="doc-endnote">
+      <p>This is the appropriate multivariate analogue of requiring that \( \tfrac
+{\partial f} {\partial y} \neq 0\). <a href="#fnref:4" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:5" role="doc-endnote">
+      <p>We denote the Jacobian of \(f\) by \(\tfrac {\partial f} {\partial
+\mathbf{x}}\). Individual partial derivatives are written \(\tfrac
+{\partial f_i} {\partial x_j}\), gradients \( \tfrac {\partial f_i}
+{\partial \mathbf{x}} \), etc. <a href="#fnref:5" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:6" role="doc-endnote">
+      <p>Even this is not the whole story—strictly speaking, the algebraic solvers
+actually can have local discontinuities because, e.g., the number of Newton
+steps varies. This means that our implementation would need to apply step
+functions to parameters, which can
+<a href="https://mc-stan.org/docs/2_20/functions-reference/step-functions.html">seriously impact sampling</a>,
+since step functions are not themselves differentiable around the “step.” <a href="#fnref:6" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:7" role="doc-endnote">
+      <p>Charles Margossian originally introduced this technique to me, but, e.g.,
+<a href="http://implicit-layers-tutorial.org/implicit_functions/">Kolter, Duvenaud, and Johnson</a>
+had previously proposed it in the autodiff literature. <a href="#fnref:7" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:8" role="doc-endnote">
+      <p>See Chapter 4 of
+<a href="https://epubs.siam.org/doi/book/10.1137/1.9780898717761">Griewank &amp; Walther</a>. <a href="#fnref:8" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:9" role="doc-endnote">
+      <p>This ODE has a closed-form solution which can be derived from the matrix
+exponential. Note that we can write, equivalently,
+\[
+    \mathbf{y}_i’(t) = \begin{bmatrix}
+        - \kappa_{i, \text{cen}}  &amp; 0 \\<br />
+        \kappa_{i, \text{cen}}    &amp; - \kappa_{i, \text{per}}
+    \end{bmatrix} \mathbf{y}_i(t).
+\]
+Note that the matrix factors:
+\begin{align*}
+    \begin{bmatrix}
+      - \kappa_{i, \text{cen}}  &amp; 0 \\<br />
+      \kappa_{i, \text{cen}}    &amp; - \kappa_{i, \text{per}}
+    \end{bmatrix}
+    &amp;= \mathbf{X}^{-1} \mathbf{\Lambda} \mathbf{X} \\<br />
+    &amp;= \begin{bmatrix}
+        1
+          &amp; 0 \\<br />
+        \tfrac {\kappa_{i, \text{cen}}} {\kappa_{i, \text{cen}}-\kappa_{i,
+        \text{per}}}
+          &amp; 1
+      \end{bmatrix} \begin{bmatrix}
+        -\kappa_{i, \text{cen}} &amp; 0 \\<br />
+        0              &amp; -\kappa_{i, \text{per}}
+      \end{bmatrix} \begin{bmatrix}
+        1
+          &amp; 0 \\<br />
+        \tfrac {\kappa_{i, \text{cen}}} {\kappa_{i, \text{per}}-\kappa_{i,
+        \text{cen}}}
+          &amp; 1
+      \end{bmatrix}.
+\end{align*}
+Therefore, the solution is given by
+\begin{align*}
+    \mathbf{y}_i(t)
+    &amp;= \exp \left(t \cdot \begin{bmatrix}
+        - \kappa_{i, \text{cen}}  &amp; 0 \\<br />
+        \kappa_{i, \text{cen}}    &amp; - \kappa_{i, \text{per}}
+      \end{bmatrix} \right) \mathbf{y}_i(0) \\<br />
+    &amp;= [\, \mathbf{X}^{-1} \exp(t \mathbf{\Lambda}) \mathbf{X} \,] \,
+      \mathbf{y}_i(0) \\<br />
+    &amp;= \begin{bmatrix}
+      \exp(-\kappa_{i, \text{cen}}t)
+        &amp; 0 \\<br />
+      \tfrac {\kappa_{i, \text{cen}}} {\kappa_{i, \text{per}} -
+      \kappa_{i, \text{cen}}} \cdot (\exp(-\kappa_{i, \text{cen}}t) -
+      \exp(-k_{i, \text{per}}t))
+        &amp; \exp(-\kappa_{i,\text{per}}t)
+    \end{bmatrix} \mathbf{y}_i(0),
+\end{align*}
+which is what is used in the Stan model, although we could have used the
+numerical ODE solver.</p>
+
+      <p>We can also use this closed form solution to explicitly calculate fixed
+points given \(\kappa_{i, \text{cen}}\), \(\kappa_{i, \text{per}}\),
+\(\delta\), and \(\tau\). In particular, straightforward algebraic
+manipulation yields that the steady state (at time \(\tau\) after a dose
+\(\delta\)) is
+  \begin{align*}
+    y_{i, \text{cen}}
+      &amp;= \frac \delta {1 - \exp(-\kappa_{i, \text{cen}} \cdot \tau)}, \\<br />
+    y_{i, \text{per}}
+      &amp;= y_{i, \text{cen}} \cdot \frac {\kappa_{i, \text{cen}}}
+        {\kappa_{i, \text{per}} - \kappa_{i, \text{cen}}} \cdot
+        \exp(-\kappa_{i, \text{cen}} \cdot \tau) - \frac {\exp(-\kappa_{i,
+        \text{per}} \cdot \tau)} {1 - \exp(-\kappa_{i, \text{per}} \cdot
+        \tau)}.
+  \end{align*}
+This expression is needed to simulate fake data. <a href="#fnref:9" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:10" role="doc-endnote">
+      <p>That is, we use
+<a href="https://github.com/stan-dev/math/commit/74c53543ac195c23cf843a2c7ad3e220e6802ce6">commit 74c5354</a>,
+which introduced the adjoint algorithm and
+<a href="https://github.com/stan-dev/math/commit/cfb93f58f68d23cededa7c22420be3d18a65c233">commit cfb93f5</a>,
+which immediately preceded it. Note that due to technical limitations, the
+actual implementation in Stan differs from the algorithms as written in
+minor ways (for instance, in the adjoint method, using reverse-mode rather
+than forward-mode to calculate the Jacobian and adding a small amount of
+memory-management–related overhead). <a href="#fnref:10" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:11" role="doc-endnote">
+      <p>The fact that it appears to be slightly slower for on the order of 30
+parameters is likely an artifact of the memory-management–related overhead
+currently necessary to implement the adjoint method in Stan. This overhead
+will be removed in the future. <a href="#fnref:11" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:12" role="doc-endnote">
+      <p>That is, the most expensive portion of the computation outside of
+evaluating the algebraic system itself, which can be arbitrarily expensive. <a href="#fnref:12" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+</article>
+
+    </main>
+    <footer>
+  
+  <p>
+    &copy; 2021–2025 Johann D. Gaebler.
+    Last updated August 19, 2025.
+  </p>
+</footer>
+
+  </body>
+</html>
