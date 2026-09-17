@@ -1,0 +1,26 @@
+\documentclass[10pt]{article}
+\usepackage[usenames]{color} %used for font color
+\usepackage{amssymb} %maths
+\usepackage{amsmath} %maths
+\usepackage{bbold} % indicators
+\usepackage[utf8]{inputenc} %useful to type directly diacritic characters
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usepackage{graphicx}
+\begin{document}
+\[\begin{tikzpicture}[scale=1.5]
+  % Add labels
+  \node[align=center] (screen)    at (0,   0) {\includegraphics[width=1.5em]{stethoscope.pdf}\\Screen};
+  \node               (screen-no) at (3,  -1) {0};
+  \node[align=center] (test)      at (3,   1) {\includegraphics[width=1.5em]{vials.pdf}\\Test};
+  \node[draw, circle] (test-pos)  at (6,   2) {$+$};
+  \node[draw, circle] (test-neg)  at (6,   0) {$-$};
+  \node               (util-neg)  at (7.5, 0) {$-c_{\text{test}}$};
+  \node               (util-neg)  at (7.5, 2) {$b_{\text{treat}}-c_{\text{test}}$};
+  % Add decision arrows
+  \draw[->]                 (screen) -- node[below, yshift=-1ex] {No}       (screen-no);
+  \draw[->]                 (screen) -- node[above, yshift= 1ex] {Yes}      (test);
+  \draw[->, shorten >= 2px] (test)   -- node[below, yshift=-1ex] {$1-r(x)$} (test-neg);
+  \draw[->, shorten >= 2px] (test)   -- node[above, yshift= 1ex] {$r(x)$}   (test-pos);
+\end{tikzpicture}\]
+\end{document}
